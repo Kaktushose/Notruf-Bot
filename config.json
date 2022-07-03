@@ -1,5 +1,6 @@
 {
   "token": "token",
+  "guildId": -1,
   "englishRoleId": -1,
   "germanRoleId": -1
 }

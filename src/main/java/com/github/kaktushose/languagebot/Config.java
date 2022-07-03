@@ -3,11 +3,13 @@ package com.github.kaktushose.languagebot;
 public class Config {
 
     private String token;
+    private long guildId;
     private long germanRoleId;
     private long englishRoleId;
 
-    public Config(String token, long germanRoleId, long englishRoleId) {
+    public Config(String token, long guildId, long germanRoleId, long englishRoleId) {
         this.token = token;
+        this.guildId = guildId;
         this.germanRoleId = germanRoleId;
         this.englishRoleId = englishRoleId;
     }
@@ -34,5 +36,13 @@ public class Config {
 
     public void setEnglishRoleId(long englishRoleId) {
         this.englishRoleId = englishRoleId;
+    }
+
+    public long getGuildId() {
+        return guildId;
+    }
+
+    public void setGuildId(long guildId) {
+        this.guildId = guildId;
     }
 }
