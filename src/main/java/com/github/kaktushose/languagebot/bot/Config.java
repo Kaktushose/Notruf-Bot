@@ -1,4 +1,6 @@
-package com.github.kaktushose.languagebot;
+package com.github.kaktushose.languagebot.bot;
+
+import com.github.kaktushose.languagebot.command.Languages;
 
 public class Config {
 
@@ -20,6 +22,16 @@ public class Config {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public long getRoleId(Languages language) {
+        if (language == Languages.GERMAN) {
+            return getGermanRoleId();
+        } else if (language == Languages.ENGLISH) {
+            return getEnglishRoleId();
+        } else {
+            throw new IllegalArgumentException("Unknown language!");
+        }
     }
 
     public long getGermanRoleId() {
