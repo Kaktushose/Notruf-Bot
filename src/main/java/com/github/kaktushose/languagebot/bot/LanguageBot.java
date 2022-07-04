@@ -28,6 +28,7 @@ public class LanguageBot {
 
         JDACommands.slash(jda, Bootstrapper.class, "com.github.kaktushose.languagebot")
                 .guilds(config.getGuildId())
+                .enableHelp(false)
                 .startGuild();
     }
 
