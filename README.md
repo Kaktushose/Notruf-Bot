@@ -1,7 +1,7 @@
 [![Java CI](https://github.com/Kaktushose/LanguageBot/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/Kaktushose/LanguageBot/actions/workflows/ci.yml)
 [![license-shield](https://img.shields.io/badge/License-Apache%202.0-lightgrey.svg)]()
 <a href="https://discord.gg/Ac2tRYG">
-<img src="https://discord.com/api/guilds/547006417542971393/embed.json" alt="discord">
+<img src="https://discord.com/api/guilds/547006417542971393/embed.png" alt="discord">
 </a>
 # LanguageBot
 
