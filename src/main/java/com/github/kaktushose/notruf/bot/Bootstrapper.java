@@ -1,10 +1,10 @@
-package com.github.kaktushose.languagebot;
+package com.github.kaktushose.notruf.bot;
 
 import com.github.kaktushose.jda.commands.annotations.Produces;
-import com.github.kaktushose.jda.commands.embeds.EmbedCache;
-import com.github.kaktushose.languagebot.bot.Config;
-import com.github.kaktushose.languagebot.bot.LanguageBot;
-import com.github.kaktushose.languagebot.command.RoleService;
+import com.github.kaktushose.jda.commands.data.EmbedCache;
+import com.github.kaktushose.notruf.bot.bot.Config;
+import com.github.kaktushose.notruf.bot.bot.NotrufBot;
+import com.github.kaktushose.notruf.bot.command.RoleService;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +16,7 @@ import java.io.IOException;
 public class Bootstrapper {
 
     private static final Logger log = LoggerFactory.getLogger(Bootstrapper.class);
-    private static LanguageBot bot;
+    private static NotrufBot bot;
 
     public static void main(String[] args) {
         log.debug("Starting bot...");
@@ -30,7 +30,7 @@ public class Bootstrapper {
             return;
         }
 
-        bot = new LanguageBot(config);
+        bot = new NotrufBot(config);
         try {
             bot.start();
         } catch (LoginException | InterruptedException e) {

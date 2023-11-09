@@ -1,22 +1,25 @@
-package com.github.kaktushose.languagebot.bot;
+package com.github.kaktushose.notruf.bot.bot;
 
 
 import com.github.kaktushose.jda.commands.JDACommands;
-import com.github.kaktushose.jda.commands.embeds.EmbedCache;
-import com.github.kaktushose.languagebot.Bootstrapper;
-import com.github.kaktushose.languagebot.command.RoleService;
+import com.github.kaktushose.jda.commands.data.EmbedCache;
+import com.github.kaktushose.notruf.bot.Bootstrapper;
+import com.github.kaktushose.notruf.bot.command.ResetCommand;
+import com.github.kaktushose.notruf.bot.command.RoleService;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.interactions.DiscordLocale;
+import net.dv8tion.jda.api.interactions.commands.localization.ResourceBundleLocalizationFunction;
 
 import javax.security.auth.login.LoginException;
 
-public class LanguageBot {
+public class NotrufBot {
 
     private final Config config;
     private EmbedCache embedCache;
     private RoleService roleService;
 
-    public LanguageBot(Config config) {
+    public NotrufBot(Config config) {
         this.config = config;
     }
 
@@ -26,10 +29,10 @@ public class LanguageBot {
         embedCache = new EmbedCache("./embeds.json");
         roleService = new RoleService(config, jda.getGuildById(config.getGuildId()));
 
-        JDACommands.slash(jda, Bootstrapper.class, "com.github.kaktushose.languagebot")
-                .guilds(config.getGuildId())
-                .enableHelp(false)
-                .startGuild();
+        JDACommands.start(jda,
+                Bootstrapper.class,
+                ResourceBundleLocalizationFunction.fromBundles("commands", DiscordLocale.GERMAN).build(),
+                "com.github.kaktushose.notruf.bot");
     }
 
     public EmbedCache getEmbedCache() {

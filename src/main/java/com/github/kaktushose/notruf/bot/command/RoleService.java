@@ -1,6 +1,6 @@
-package com.github.kaktushose.languagebot.command;
+package com.github.kaktushose.notruf.bot.command;
 
-import com.github.kaktushose.languagebot.bot.Config;
+import com.github.kaktushose.notruf.bot.bot.Config;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
 

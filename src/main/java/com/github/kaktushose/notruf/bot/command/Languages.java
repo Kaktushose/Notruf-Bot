@@ -1,4 +1,4 @@
-package com.github.kaktushose.languagebot.command;
+package com.github.kaktushose.notruf.bot.command;
 
 import java.util.Locale;
 

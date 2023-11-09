@@ -1,16 +1,16 @@
-package com.github.kaktushose.languagebot.command;
+package com.github.kaktushose.notruf.bot.command;
 
-import com.github.kaktushose.jda.commands.annotations.Command;
-import com.github.kaktushose.jda.commands.annotations.CommandController;
 import com.github.kaktushose.jda.commands.annotations.Inject;
 import com.github.kaktushose.jda.commands.annotations.interactions.Choices;
+import com.github.kaktushose.jda.commands.annotations.interactions.Interaction;
 import com.github.kaktushose.jda.commands.annotations.interactions.Param;
-import com.github.kaktushose.jda.commands.dispatching.CommandEvent;
-import com.github.kaktushose.jda.commands.embeds.EmbedCache;
+import com.github.kaktushose.jda.commands.annotations.interactions.SlashCommand;
+import com.github.kaktushose.jda.commands.data.EmbedCache;
+import com.github.kaktushose.jda.commands.dispatching.interactions.commands.CommandEvent;
 
 import java.util.Locale;
 
-@CommandController(value = "opt out", ephemeral = true)
+@Interaction(value = "opt out", ephemeral = true)
 public class OptOutCommand {
 
     @Inject
@@ -18,7 +18,7 @@ public class OptOutCommand {
     @Inject
     private RoleService roleService;
 
-    @Command(name = "Opt-out", desc = "DE: Macht einen Sprachbereich unsichtbar | EN: Opt out from a language", isSuper = true)
+    @SlashCommand(desc = "DE: Macht einen Sprachbereich unsichtbar | EN: Opt out from a language")
     public void onOptOut(CommandEvent event, @Choices({"english", "german"}) @Param("DE: Die zu entfernende Sprache | EN: The language to opt out from") Languages language) {
         if (roleService.isInvalid(event.getUser(), language)) {
             event.reply(embedCache.getEmbed("error"));

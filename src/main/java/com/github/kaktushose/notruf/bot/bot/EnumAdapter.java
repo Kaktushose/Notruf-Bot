@@ -1,9 +1,9 @@
-package com.github.kaktushose.languagebot.bot;
+package com.github.kaktushose.notruf.bot.bot;
 
 import com.github.kaktushose.jda.commands.annotations.Component;
-import com.github.kaktushose.jda.commands.dispatching.CommandContext;
 import com.github.kaktushose.jda.commands.dispatching.adapter.TypeAdapter;
-import com.github.kaktushose.languagebot.command.Languages;
+import com.github.kaktushose.jda.commands.dispatching.interactions.Context;
+import com.github.kaktushose.notruf.bot.command.Languages;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -12,7 +12,7 @@ import java.util.Optional;
 public class EnumAdapter implements TypeAdapter<Languages> {
 
     @Override
-    public Optional<Languages> parse(@NotNull String raw, @NotNull CommandContext context) {
+    public Optional<Languages> parse(@NotNull String raw, @NotNull Context context) {
         try {
             return Optional.of(Languages.valueOf(raw.toUpperCase()));
         } catch (IllegalArgumentException ignored) {
