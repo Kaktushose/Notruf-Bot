@@ -9,9 +9,13 @@ import com.github.kaktushose.notruf.bot.command.RoleService;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.interactions.DiscordLocale;
+import net.dv8tion.jda.api.interactions.commands.localization.LocalizationFunction;
 import net.dv8tion.jda.api.interactions.commands.localization.ResourceBundleLocalizationFunction;
+import org.jetbrains.annotations.NotNull;
 
 import javax.security.auth.login.LoginException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class NotrufBot {
 
@@ -28,6 +32,8 @@ public class NotrufBot {
 
         embedCache = new EmbedCache("./embeds.json");
         roleService = new RoleService(config, jda.getGuildById(config.getGuildId()));
+
+        //ResourceBundleLocalizationFunction.fromBundles("commands", DiscordLocale.GERMAN).build()
 
         JDACommands.start(jda,
                 Bootstrapper.class,

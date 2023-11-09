@@ -14,7 +14,7 @@ public class ResetCommand {
     @Inject
     private RoleService roleService;
 
-    @SlashCommand(desc = "DE: Macht alle Kanäle wieder sichtbar | EN: Makes all channels visible again")
+    @SlashCommand(desc = "Makes all channels visible again")
     public void onReset(CommandEvent event) {
         roleService.removeRole(event.getUser(), Languages.GERMAN);
         roleService.removeRole(event.getUser(), Languages.ENGLISH);

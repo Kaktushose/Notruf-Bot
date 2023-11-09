@@ -18,8 +18,8 @@ public class OptOutCommand {
     @Inject
     private RoleService roleService;
 
-    @SlashCommand(desc = "DE: Macht einen Sprachbereich unsichtbar | EN: Opt out from a language")
-    public void onOptOut(CommandEvent event, @Choices({"english", "german"}) @Param("DE: Die zu entfernende Sprache | EN: The language to opt out from") Languages language) {
+    @SlashCommand(desc = "Opt out from a language")
+    public void onOptOut(CommandEvent event, @Choices({"english", "german"}) @Param("The language to opt out from") Languages language) {
         if (roleService.isInvalid(event.getUser(), language)) {
             event.reply(embedCache.getEmbed("error"));
             return;
