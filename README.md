@@ -3,10 +3,10 @@
 <a href="https://discord.gg/Ac2tRYG">
 <img src="https://discord.com/api/guilds/547006417542971393/embed.png" alt="discord">
 </a>
-# LanguageBot
+# Notruf Bot
 
 This bot was created specifically for the official Discord [server](https://discord.gg/Ac2tRYG) of the game [Notruf 112 - Die Feuerwehrsimulation 2](https://store.steampowered.com/app/785770/Notruf_112__Die_Feuerwehr_Simulation_2). 
-It's only purpose is to add roles to users. 
+It's only purpose is to add roles to users and to manage bug reports. 
 
 - Use `/opt out <english|german>` to mute the english/german announcement channels
 
