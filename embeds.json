@@ -13,5 +13,9 @@
     "title": "Oops",
     "description": ":flag_de: Du kannst nicht beide Sprachen entfernen. Nutze `/reset` um deine Einstellungen zurückzusetzen\n\n:flag_gb: You cannot opt-out from both languages. Use `/reset` to reset your settings",
     "color": "#c95f4f"
+  },
+  "report": {
+    "title": "Bug Report #{id}",
+    "description": "Neuer Bug Report von {user}:"
   }
 }

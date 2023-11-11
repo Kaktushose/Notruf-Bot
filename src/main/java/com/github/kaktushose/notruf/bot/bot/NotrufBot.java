@@ -30,10 +30,11 @@ public class NotrufBot {
     public void start() throws LoginException, InterruptedException {
         JDA jda = JDABuilder.createDefault(config.getToken()).build().awaitReady();
 
+        jda.addEventListener(new DirectMessageListener(jda.getGuildById(496614159254028289L)));
+
         embedCache = new EmbedCache("./embeds.json");
         roleService = new RoleService(config, jda.getGuildById(config.getGuildId()));
 
-        //ResourceBundleLocalizationFunction.fromBundles("commands", DiscordLocale.GERMAN).build()
 
         JDACommands.start(jda,
                 Bootstrapper.class,
