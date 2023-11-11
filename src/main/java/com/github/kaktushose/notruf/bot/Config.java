@@ -1,6 +1,6 @@
-package com.github.kaktushose.notruf.bot.bot;
+package com.github.kaktushose.notruf.bot;
 
-import com.github.kaktushose.notruf.bot.command.Languages;
+import com.github.kaktushose.notruf.bot.language.Languages;
 
 public class Config {
 

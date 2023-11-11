@@ -1,4 +1,4 @@
-package com.github.kaktushose.notruf.bot.bot;
+package com.github.kaktushose.notruf.bot.report;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;

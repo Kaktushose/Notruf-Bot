@@ -1,4 +1,4 @@
-package com.github.kaktushose.notruf.bot.command;
+package com.github.kaktushose.notruf.bot.language;
 
 import com.github.kaktushose.jda.commands.annotations.Inject;
 import com.github.kaktushose.jda.commands.annotations.interactions.Interaction;

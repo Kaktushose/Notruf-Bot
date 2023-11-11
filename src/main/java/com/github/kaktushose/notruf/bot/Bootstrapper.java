@@ -2,9 +2,7 @@ package com.github.kaktushose.notruf.bot;
 
 import com.github.kaktushose.jda.commands.annotations.Produces;
 import com.github.kaktushose.jda.commands.data.EmbedCache;
-import com.github.kaktushose.notruf.bot.bot.Config;
-import com.github.kaktushose.notruf.bot.bot.NotrufBot;
-import com.github.kaktushose.notruf.bot.command.RoleService;
+import com.github.kaktushose.notruf.bot.language.RoleService;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

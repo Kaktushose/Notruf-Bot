@@ -1,21 +1,16 @@
-package com.github.kaktushose.notruf.bot.bot;
+package com.github.kaktushose.notruf.bot;
 
 
 import com.github.kaktushose.jda.commands.JDACommands;
 import com.github.kaktushose.jda.commands.data.EmbedCache;
-import com.github.kaktushose.notruf.bot.Bootstrapper;
-import com.github.kaktushose.notruf.bot.command.ResetCommand;
-import com.github.kaktushose.notruf.bot.command.RoleService;
+import com.github.kaktushose.notruf.bot.report.DirectMessageListener;
+import com.github.kaktushose.notruf.bot.language.RoleService;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.interactions.DiscordLocale;
-import net.dv8tion.jda.api.interactions.commands.localization.LocalizationFunction;
 import net.dv8tion.jda.api.interactions.commands.localization.ResourceBundleLocalizationFunction;
-import org.jetbrains.annotations.NotNull;
 
 import javax.security.auth.login.LoginException;
-import java.util.HashMap;
-import java.util.Map;
 
 public class NotrufBot {
 

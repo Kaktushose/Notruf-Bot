@@ -1,14 +1,13 @@
-package com.github.kaktushose.notruf.bot.bot;
+package com.github.kaktushose.notruf.bot.language;
 
-import com.github.kaktushose.jda.commands.annotations.Component;
+import com.github.kaktushose.jda.commands.annotations.Implementation;
 import com.github.kaktushose.jda.commands.dispatching.adapter.TypeAdapter;
 import com.github.kaktushose.jda.commands.dispatching.interactions.Context;
-import com.github.kaktushose.notruf.bot.command.Languages;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
-@Component
+@Implementation
 public class EnumAdapter implements TypeAdapter<Languages> {
 
     @Override
