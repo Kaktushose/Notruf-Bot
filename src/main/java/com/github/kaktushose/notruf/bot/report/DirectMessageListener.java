@@ -106,15 +106,21 @@ public class DirectMessageListener extends ListenerAdapter {
             String authorId = componentId.split("-")[1];
             event.getMessage().createThreadChannel(String.format("Bug-Report-%s", event.getMessage().getId()))
                     .setAutoArchiveDuration(ThreadChannel.AutoArchiveDuration.TIME_1_WEEK)
-                    .queue(thread -> {
-                        thread.addThreadMemberById(authorId).flatMap(empty ->
-                                thread.sendMessage(embedCache.getEmbed("threadOpen")
-                                        .injectValue("user", String.format("<@%s>", authorId))
-                                        .toMessageCreateData()
-                                )
-                        ).queue();
-                        event.reply(String.format("Thread %s erstellt", thread.getAsMention())).setEphemeral(true).queue();
-                    });
+                    .queue(thread -> thread.addThreadMemberById(authorId).flatMap(empty ->
+                            thread.sendMessage(embedCache.getEmbed("threadOpen")
+                                    .injectValue("user", String.format("<@%s>", authorId))
+                                    .toMessageCreateData()
+                            )
+                    ).queue());
+
+            MessageEditBuilder builder = MessageEditBuilder.fromMessage(event.getMessage());
+            EmbedBuilder embed = EmbedBuilder.fromData(builder.getEmbeds().get(0).toData());
+            embed.setColor(0x67c94f);
+            embed.getFields().clear();
+            embed.addField("Status", "✅ bearbeitet", false);
+
+            builder = new MessageEditBuilder().setComponents().setEmbeds(embed.build());
+            event.editMessage(builder.build()).queue();
         }
     }
 }
