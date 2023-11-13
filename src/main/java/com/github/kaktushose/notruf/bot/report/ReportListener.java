@@ -148,6 +148,8 @@ public class ReportListener extends ListenerAdapter {
             reportChannel.getJDA().retrieveUserById(authorId).flatMap(User::openPrivateChannel).flatMap(channel ->
                     channel.sendMessage(embedCache.getEmbed("reportDone").toMessageCreateData())
             ).queue();
+
+            reportCache.remove(Long.valueOf(authorId));
             return;
         }
 
