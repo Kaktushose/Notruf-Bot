@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -64,21 +65,17 @@ public class ReportListener extends ListenerAdapter {
             MessageEmbed oldEmbed = message.getEmbeds().get(0);
             EmbedBuilder newEmbed = new EmbedBuilder(oldEmbed);
 
-            String description = String.format("%s\n%s", oldEmbed.getDescription(), event.getMessage().getContentDisplay());
-            if (description.length() > MessageEmbed.DESCRIPTION_MAX_LENGTH) {
-                description = description.substring(0, MessageEmbed.DESCRIPTION_MAX_LENGTH - 4) + "...";
+            String report = String.format("%s\n%s", oldEmbed.getDescription(), event.getMessage().getContentDisplay());
+            if (report.length() > MessageEmbed.DESCRIPTION_MAX_LENGTH) {
+                report = report.substring(0, MessageEmbed.DESCRIPTION_MAX_LENGTH - 4) + "...";
             }
-            newEmbed.setDescription(description);
+            newEmbed.setDescription(report);
             builder.setEmbeds(newEmbed.build());
 
-            message.editMessage(builder.build()).queue(success -> {
-                for (Message.Attachment attachment : event.getMessage().getAttachments()) {
-                    attachment.getProxy().download().thenAccept(download ->
-                            success.editMessageAttachments(AttachedFile.fromData(download, attachment.getFileName())).queue()
-                    );
-                }
-            });
+            message.editMessage(builder.build()).queue(success -> addAttachments(success, event.getMessage().getAttachments()));
         });
+
+        event.getChannel().sendMessage(embedCache.getEmbed("reportUpdate").toMessageCreateData()).queue();
     }
 
     private void createReport(MessageReceivedEvent event, long authorId) {
@@ -103,19 +100,23 @@ public class ReportListener extends ListenerAdapter {
                         Button.danger("delete", "Report löschen").withEmoji(Emoji.fromFormatted("\uD83D\uDDD1"))
                 );
 
-        event.getChannel().sendMessage(embedCache.getEmbed("reportConfirm").toMessageCreateData()).queue();
+        EmbedDTO confirm = message.getAttachments().isEmpty() ? embedCache.getEmbed("reportConfirmNoAttachments") : embedCache.getEmbed("reportConfirm");
+        event.getChannel().sendMessage(confirm.toMessageCreateData()).queue();
 
         reportChannel.sendMessage(builder.build()).queue(success -> {
-
             reportCache.put(authorId, success.getIdLong());
             executorService.schedule(() -> reportCache.remove(authorId), 1, TimeUnit.HOURS);
 
-            for (Message.Attachment attachment : message.getAttachments()) {
-                attachment.getProxy().download().thenAccept(download ->
-                        success.editMessageAttachments(AttachedFile.fromData(download, attachment.getFileName())).queue()
-                );
-            }
+            addAttachments(success, message.getAttachments());
         });
+    }
+
+    private void addAttachments(Message message, List<Message.Attachment> attachments) {
+        for (Message.Attachment attachment : attachments) {
+            attachment.getProxy().download().thenAccept(download ->
+                    message.editMessageAttachments(AttachedFile.fromData(download, attachment.getFileName())).queue()
+            );
+        }
     }
 
     @Override
