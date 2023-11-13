@@ -6,12 +6,14 @@ public class Config {
 
     private String token;
     private long guildId;
+    private long reportChannelId;
     private long germanRoleId;
     private long englishRoleId;
 
-    public Config(String token, long guildId, long germanRoleId, long englishRoleId) {
+    public Config(String token, long guildId, long reportChannelId, long germanRoleId, long englishRoleId) {
         this.token = token;
         this.guildId = guildId;
+        this.reportChannelId = reportChannelId;
         this.germanRoleId = germanRoleId;
         this.englishRoleId = englishRoleId;
     }
@@ -56,5 +58,13 @@ public class Config {
 
     public void setGuildId(long guildId) {
         this.guildId = guildId;
+    }
+
+    public long getReportChannelId() {
+        return reportChannelId;
+    }
+
+    public void setReportChannelId(long reportChannelId) {
+        this.reportChannelId = reportChannelId;
     }
 }

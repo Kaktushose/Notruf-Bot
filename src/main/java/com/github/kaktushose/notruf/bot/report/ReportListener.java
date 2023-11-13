@@ -3,7 +3,6 @@ package com.github.kaktushose.notruf.bot.report;
 import com.github.kaktushose.jda.commands.data.EmbedCache;
 import com.github.kaktushose.jda.commands.data.EmbedDTO;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
@@ -17,17 +16,18 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.AttachedFile;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
+import org.apache.commons.collections4.map.LRUMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
 
-public class DirectMessageListener extends ListenerAdapter {
+public class ReportListener extends ListenerAdapter {
 
     private final EmbedCache embedCache;
     private final TextChannel reportChannel;
 
-    public DirectMessageListener(Guild guild, EmbedCache embedCache) {
-        reportChannel = guild.getChannelById(TextChannel.class, 545967082253189121L);
+    public ReportListener(TextChannel reportChannel, EmbedCache embedCache) {
+        this.reportChannel = reportChannel;
         this.embedCache = embedCache;
     }
 
