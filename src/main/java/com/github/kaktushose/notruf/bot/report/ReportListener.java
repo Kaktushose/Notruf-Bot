@@ -4,6 +4,7 @@ import com.github.kaktushose.jda.commands.data.EmbedCache;
 import com.github.kaktushose.jda.commands.data.EmbedDTO;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
@@ -16,19 +17,27 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.AttachedFile;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
-import org.apache.commons.collections4.map.LRUMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class ReportListener extends ListenerAdapter {
 
+    private final ScheduledExecutorService executorService;
+    private final Map<Long, Long> reportCache;
     private final EmbedCache embedCache;
     private final TextChannel reportChannel;
 
     public ReportListener(TextChannel reportChannel, EmbedCache embedCache) {
         this.reportChannel = reportChannel;
         this.embedCache = embedCache;
+        reportCache = new HashMap<>();
+        executorService = new ScheduledThreadPoolExecutor(5);
     }
 
     @Override
@@ -41,27 +50,66 @@ public class ReportListener extends ListenerAdapter {
             return;
         }
 
+        long authorId = event.getAuthor().getIdLong();
+        if (reportCache.containsKey(authorId)) {
+            updateReport(event, reportCache.get(authorId));
+        } else {
+            createReport(event, authorId);
+        }
+    }
+
+    private void updateReport(MessageReceivedEvent event, long reportMessageId) {
+        reportChannel.retrieveMessageById(reportMessageId).queue(message -> {
+            MessageEditBuilder builder = MessageEditBuilder.fromMessage(message);
+            MessageEmbed oldEmbed = message.getEmbeds().get(0);
+            EmbedBuilder newEmbed = new EmbedBuilder(oldEmbed);
+
+            String description = String.format("%s\n%s", oldEmbed.getDescription(), event.getMessage().getContentDisplay());
+            if (description.length() > MessageEmbed.DESCRIPTION_MAX_LENGTH) {
+                description = description.substring(0, MessageEmbed.DESCRIPTION_MAX_LENGTH - 4) + "...";
+            }
+            newEmbed.setDescription(description);
+            builder.setEmbeds(newEmbed.build());
+
+            message.editMessage(builder.build()).queue(success -> {
+                for (Message.Attachment attachment : event.getMessage().getAttachments()) {
+                    attachment.getProxy().download().thenAccept(download ->
+                            success.editMessageAttachments(AttachedFile.fromData(download, attachment.getFileName())).queue()
+                    );
+                }
+            });
+        });
+    }
+
+    private void createReport(MessageReceivedEvent event, long authorId) {
         Message message = event.getMessage();
-        User author = message.getAuthor();
         EmbedDTO embedDTO = embedCache.getEmbed("report");
 
+        String report = message.getContentDisplay();
+        if (report.length() > MessageEmbed.DESCRIPTION_MAX_LENGTH) {
+            report = report.substring(0, MessageEmbed.DESCRIPTION_MAX_LENGTH - 4) + "...";
+        }
 
         MessageCreateBuilder builder = new MessageCreateBuilder();
         builder.setEmbeds(embedDTO.injectValue("id", message.getId())
-                        .injectValue("report", message.getContentDisplay())
+                        .injectValue("report", report)
                         .toEmbedBuilder()
                         .setTimestamp(Instant.now())
                         .build())
                 .addActionRow(
-                        Button.primary(String.format("contact-%s", author.getId()), "Thread eröffnen")
+                        Button.primary(String.format("contact-%d", authorId), "Thread eröffnen")
                                 .withEmoji(Emoji.fromFormatted("\uD83D\uDCDD")),
-                        Button.success(String.format("done-%s", author.getId()), "Erledigt").withEmoji(Emoji.fromFormatted("✅")),
+                        Button.success(String.format("done-%d", authorId), "Erledigt").withEmoji(Emoji.fromFormatted("✅")),
                         Button.danger("delete", "Report löschen").withEmoji(Emoji.fromFormatted("\uD83D\uDDD1"))
                 );
 
         event.getChannel().sendMessage(embedCache.getEmbed("reportConfirm").toMessageCreateData()).queue();
 
         reportChannel.sendMessage(builder.build()).queue(success -> {
+
+            reportCache.put(authorId, success.getIdLong());
+            executorService.schedule(() -> reportCache.remove(authorId), 1, TimeUnit.HOURS);
+
             for (Message.Attachment attachment : message.getAttachments()) {
                 attachment.getProxy().download().thenAccept(download ->
                         success.editMessageAttachments(AttachedFile.fromData(download, attachment.getFileName())).queue()
@@ -84,7 +132,7 @@ public class ReportListener extends ListenerAdapter {
             String authorId = componentId.split("-")[1];
 
             MessageEditBuilder builder = MessageEditBuilder.fromMessage(event.getMessage());
-            EmbedBuilder embed = EmbedBuilder.fromData(builder.getEmbeds().get(0).toData());
+            EmbedBuilder embed = new EmbedBuilder(builder.getEmbeds().get(0));
 
             builder = new MessageEditBuilder();
             builder.setActionRow(Button.primary(String.format("contact-%s", authorId), "Thread eröffnen")
@@ -114,7 +162,7 @@ public class ReportListener extends ListenerAdapter {
                     ).queue());
 
             MessageEditBuilder builder = MessageEditBuilder.fromMessage(event.getMessage());
-            EmbedBuilder embed = EmbedBuilder.fromData(builder.getEmbeds().get(0).toData());
+            EmbedBuilder embed = new EmbedBuilder(builder.getEmbeds().get(0));
             embed.setColor(0x67c94f);
             embed.getFields().clear();
             embed.addField("Status", "✅ bearbeitet", false);
