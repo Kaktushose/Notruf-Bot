@@ -14,6 +14,7 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.utils.AttachedFile;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -41,10 +42,9 @@ public class DirectMessageListener extends ListenerAdapter {
         }
 
         Message message = event.getMessage();
-
         User author = message.getAuthor();
-
         EmbedDTO embedDTO = embedCache.getEmbed("report");
+
 
         MessageCreateBuilder builder = new MessageCreateBuilder();
         builder.setEmbeds(embedDTO.injectValue("id", message.getId())
@@ -61,7 +61,13 @@ public class DirectMessageListener extends ListenerAdapter {
 
         event.getChannel().sendMessage(embedCache.getEmbed("reportConfirm").toMessageCreateData()).queue();
 
-        reportChannel.sendMessage(builder.build()).queue();
+        reportChannel.sendMessage(builder.build()).queue(success -> {
+            for (Message.Attachment attachment : message.getAttachments()) {
+                attachment.getProxy().download().thenAccept(download ->
+                        success.editMessageAttachments(AttachedFile.fromData(download, attachment.getFileName())).queue()
+                );
+            }
+        });
     }
 
     @Override
@@ -91,7 +97,7 @@ public class DirectMessageListener extends ListenerAdapter {
             event.editMessage(builder.build()).queue();
 
             reportChannel.getJDA().retrieveUserById(authorId).flatMap(User::openPrivateChannel).flatMap(channel ->
-                channel.sendMessage(embedCache.getEmbed("reportDone").toMessageCreateData())
+                    channel.sendMessage(embedCache.getEmbed("reportDone").toMessageCreateData())
             ).queue();
             return;
         }
