@@ -16,6 +16,28 @@
   },
   "report": {
     "title": "Bug Report #{id}",
-    "description": "Neuer Bug Report von {user}:"
+    "description": "{report}",
+    "fields": [
+      {
+        "name": "Status",
+        "value": "❓ unbearbeitet"
+      }
+    ],
+    "color": "#F3D53B"
+  },
+  "reportConfirm": {
+    "title": "Vielen Dank!",
+    "description": "Dein Bug Report ist beim Entwickler-Team eingegangen. Sobald dieser vom Team bearbeitet wurde, gebe ich dir Bescheid.",
+    "color": "#F3D53B"
+  },
+  "reportDone": {
+    "title": "Update",
+    "description": "Dein Bug Report wurde vom Entwickler-Team gesichtet. Dies bedeutet jedoch nicht, dass der Bug im nächsten Update auch automatisch behoben sein wird.\nVielen Dank für deine Hilfe!",
+    "color": "#F67c94f"
+  },
+  "threadOpen": {
+    "title": "Nachfrage zum Report",
+    "description": "Hallo {user},\ndas Entwickler-Team hat noch ein paar Nachfragen zu deinem Bug Report und wird sich in Kürze bei dir melden.",
+    "color": "#F3D53B"
   }
 }

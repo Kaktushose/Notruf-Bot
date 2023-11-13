@@ -72,7 +72,7 @@
         <dependency>
             <groupId>com.github.Kaktushose</groupId>
             <artifactId>jda-commands</artifactId>
-            <version>b26f308408</version>
+            <version>2e2e80cd8d</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

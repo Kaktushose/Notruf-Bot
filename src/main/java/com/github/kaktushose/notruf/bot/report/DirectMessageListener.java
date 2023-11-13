@@ -1,5 +1,7 @@
 package com.github.kaktushose.notruf.bot.report;
 
+import com.github.kaktushose.jda.commands.data.EmbedCache;
+import com.github.kaktushose.jda.commands.data.EmbedDTO;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
@@ -20,10 +22,12 @@ import java.time.Instant;
 
 public class DirectMessageListener extends ListenerAdapter {
 
+    private final EmbedCache embedCache;
     private final TextChannel reportChannel;
 
-    public DirectMessageListener(Guild guild) {
+    public DirectMessageListener(Guild guild, EmbedCache embedCache) {
         reportChannel = guild.getChannelById(TextChannel.class, 545967082253189121L);
+        this.embedCache = embedCache;
     }
 
     @Override
@@ -40,22 +44,22 @@ public class DirectMessageListener extends ListenerAdapter {
 
         User author = message.getAuthor();
 
-        EmbedBuilder embed = new EmbedBuilder()
-                .setTitle(String.format("Bug Report %s:", event.getMessage().getId()))
-                .setDescription(String.format(message.getContentDisplay()))
-                .addField("Status", "❓ unbearbeitet", false)
-                .setTimestamp(Instant.now())
-                .setAuthor(message.getAuthor().getEffectiveName(), null, author.getAvatarUrl() == null ? "https://cdn.discordapp.com/embed/avatars/0.png" : author.getAvatarUrl())
-                .setColor(0xF3D53B);
+        EmbedDTO embedDTO = embedCache.getEmbed("report");
 
         MessageCreateBuilder builder = new MessageCreateBuilder();
-        builder.setEmbeds(embed.build())
+        builder.setEmbeds(embedDTO.injectValue("id", message.getId())
+                        .injectValue("report", message.getContentDisplay())
+                        .toEmbedBuilder()
+                        .setTimestamp(Instant.now())
+                        .build())
                 .addActionRow(
                         Button.primary(String.format("contact-%s", author.getId()), "Thread eröffnen")
                                 .withEmoji(Emoji.fromFormatted("\uD83D\uDCDD")),
                         Button.success(String.format("done-%s", author.getId()), "Erledigt").withEmoji(Emoji.fromFormatted("✅")),
                         Button.danger("delete", "Report löschen").withEmoji(Emoji.fromFormatted("\uD83D\uDDD1"))
                 );
+
+        event.getChannel().sendMessage(embedCache.getEmbed("reportConfirm").toMessageCreateData()).queue();
 
         reportChannel.sendMessage(builder.build()).queue();
     }
@@ -86,19 +90,25 @@ public class DirectMessageListener extends ListenerAdapter {
 
             event.editMessage(builder.build()).queue();
 
-            reportChannel.getJDA().retrieveUserById(authorId).flatMap(User::openPrivateChannel).flatMap(channel -> channel.sendMessage("bearbeitet")).queue();
+            reportChannel.getJDA().retrieveUserById(authorId).flatMap(User::openPrivateChannel).flatMap(channel ->
+                channel.sendMessage(embedCache.getEmbed("reportDone").toMessageCreateData())
+            ).queue();
             return;
         }
 
         if (componentId.startsWith("contact")) {
-            event.reply("*Thread erstellt*").setEphemeral(true).queue();
             String authorId = componentId.split("-")[1];
             event.getMessage().createThreadChannel(String.format("Bug-Report-%s", event.getMessage().getId()))
                     .setAutoArchiveDuration(ThreadChannel.AutoArchiveDuration.TIME_1_WEEK)
-                    .map(thread -> {
-                        thread.sendMessage("hello" + "<@" + authorId + ">").queue();
-                        return thread.addThreadMemberById(authorId);
-                    }).queue();
+                    .queue(thread -> {
+                        thread.addThreadMemberById(authorId).flatMap(empty ->
+                                thread.sendMessage(embedCache.getEmbed("threadOpen")
+                                        .injectValue("user", String.format("<@%s>", authorId))
+                                        .toMessageCreateData()
+                                )
+                        ).queue();
+                        event.reply(String.format("Thread %s erstellt", thread.getAsMention())).setEphemeral(true).queue();
+                    });
         }
     }
 }
