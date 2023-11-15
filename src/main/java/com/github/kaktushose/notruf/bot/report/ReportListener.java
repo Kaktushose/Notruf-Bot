@@ -4,10 +4,12 @@ import com.github.kaktushose.jda.commands.data.EmbedCache;
 import com.github.kaktushose.jda.commands.data.EmbedDTO;
 import com.github.kaktushose.notruf.bot.NotrufBot;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
+import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
@@ -24,6 +26,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -32,11 +35,13 @@ public class ReportListener extends ListenerAdapter {
 
     private final ScheduledExecutorService executorService;
     private final Map<Long, Long> reportCache;
+    private final Category reportCategory;
     private final EmbedCache embedCache;
     private final TextChannel reportChannel;
 
-    public ReportListener(TextChannel reportChannel, NotrufBot.EmbedCacheContainer container) {
+    public ReportListener(TextChannel reportChannel, Category reportCategory, NotrufBot.EmbedCacheContainer container) {
         this.reportChannel = reportChannel;
+        this.reportCategory = reportCategory;
         this.embedCache = container.germanCache();
         ;
         reportCache = new HashMap<>();
@@ -121,6 +126,7 @@ public class ReportListener extends ListenerAdapter {
         }
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onButtonInteraction(@NotNull ButtonInteractionEvent event) {
         String componentId = event.getComponentId();
@@ -159,23 +165,45 @@ public class ReportListener extends ListenerAdapter {
 
         if (componentId.startsWith("contact")) {
             String authorId = componentId.split("-")[1];
-            event.getMessage().createThreadChannel(String.format("Bug-Report-%s", event.getMessage().getId()))
-                    .setAutoArchiveDuration(ThreadChannel.AutoArchiveDuration.TIME_1_WEEK)
-                    .queue(thread -> thread.addThreadMemberById(authorId).flatMap(empty ->
-                            thread.sendMessage(embedCache.getEmbed("threadOpen")
-                                    .injectValue("user", String.format("<@%s>", authorId))
-                                    .toMessageCreateData()
-                            )
-                    ).queue());
 
-            MessageEditBuilder builder = MessageEditBuilder.fromMessage(event.getMessage());
-            EmbedBuilder embed = new EmbedBuilder(builder.getEmbeds().get(0));
-            embed.setColor(0x67c94f);
-            embed.getFields().clear();
-            embed.addField("Status", "✅ bearbeitet", false);
+            event.getGuild().createTextChannel(String.format("Bug-Report-%s", event.getMessage().getId()), reportCategory)
+                    .syncPermissionOverrides()
+                    .addMemberPermissionOverride(Long.parseLong(authorId), Permission.VIEW_CHANNEL.getRawValue(), 0)
+                    .queue(channel -> {
+                        channel.sendMessage(String.format("<@%s>", authorId)).queue();
+                        channel.sendMessage(embedCache.getEmbed("threadOpen")
+                                .injectValue("user", String.format("<@%s>", authorId))
+                                .toMessageCreateData()
+                        ).queue();
 
-            builder = new MessageEditBuilder().setComponents().setEmbeds(embed.build());
-            event.editMessage(builder.build()).queue();
+                        MessageEditBuilder builder = MessageEditBuilder.fromMessage(event.getMessage());
+                        EmbedBuilder embed = new EmbedBuilder(builder.getEmbeds().get(0));
+                        embed.setColor(0x67c94f);
+                        embed.getFields().clear();
+                        embed.addField("Status", "✅ bearbeitet", false);
+
+                        builder = new MessageEditBuilder().setActionRow(
+                                Button.danger(String.format("close-%s-%s", channel.getId(), authorId), "Thread schließen").withEmoji(Emoji.fromFormatted("\uD83D\uDDD1"))
+                        ).setEmbeds(embed.build());
+                        event.editMessage(builder.build()).setContent(String.format("Thread <#%s>", channel.getId())).queue();
+
+                        reportCache.remove(Long.valueOf(authorId));
+                    });
         }
+
+        if (componentId.startsWith("close")) {
+            String channelId = componentId.split("-")[1];
+            String authorId = componentId.split("-")[2];
+            Optional.ofNullable(event.getGuild().getTextChannelById(channelId)).ifPresent(it -> it.delete().queue());
+
+            reportChannel.getJDA().retrieveUserById(authorId).flatMap(User::openPrivateChannel).flatMap(channel ->
+                    channel.sendMessage(embedCache.getEmbed("reportDone").toMessageCreateData())
+            ).queue();
+
+            event.editComponents().setContent("").queue();
+
+            reportCache.remove(Long.valueOf(authorId));
+        }
+
     }
 }

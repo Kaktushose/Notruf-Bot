@@ -32,7 +32,7 @@
   },
   "reportConfirmNoAttachments": {
     "title": "Vielen Dank!",
-    "description": "Dein Bug Report ist beim Entwickler-Team eingegangen. Sobald dieser vom Team bearbeitet wurde, gebe ich dir Bescheid.\n\nFalls möglich, füge deinem Bug Report bitte noch die entsprechende Logdatei sowie Screenshots hinzu. Die Logdatei findest du hier:\n`C:\\Users\\%username\\Dokumente\\Notruf 2\\game_host_log-xxx.txt`. Damit kannst du das Entwickler-Team zusätzlich unterstützen.\n\nSchicke mir dafür die entsprechenden Dateien einfach als Nachricht.",
+    "description": "Dein Bug Report ist beim Entwickler-Team eingegangen. Sobald dieser vom Team bearbeitet wurde, gebe ich dir Bescheid.\n\nFalls möglich, füge deinem Bug Report bitte noch die entsprechende Logdatei sowie Screenshots hinzu. Die Logdatei findest du hier:\n`C:\\Users\\%username%\\Dokumente\\Notruf 2\\game_host_log-xxx.txt`. Damit kannst du das Entwickler-Team zusätzlich unterstützen.\n\nSchicke mir dafür die entsprechenden Dateien einfach als Nachricht.",
     "color": "#F3D53B"
   },
   "reportUpdate": {
@@ -49,5 +49,10 @@
     "title": "Nachfrage zum Report",
     "description": "Hallo {user},\ndas Entwickler-Team hat noch ein paar Nachfragen zu deinem Bug Report und wird sich in Kürze bei dir melden.",
     "color": "#F3D53B"
+  },
+  "threadDOne": {
+    "title": "Update",
+    "description": "Das Entwickler-Team konnte alle notwendigen Informationen sammeln. Dementsprechend habe ich den gemeinsamen Textkanal wieder geschlossen.\nVielen Dank für deine Hilfe!",
+    "color": "#F67c94f"
   }
 }

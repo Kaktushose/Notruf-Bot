@@ -35,7 +35,7 @@ public class NotrufBot {
         roleService = new RoleService(config, guild);
         jda.getPresence().setPresence(OnlineStatus.ONLINE, Activity.customStatus("Schreibe mir für Bug Reports"));
 
-        jda.addEventListener(new ReportListener(guild.getTextChannelById(config.getReportChannelId()), container));
+        jda.addEventListener(new ReportListener(guild.getTextChannelById(config.getReportChannelId()), guild.getCategoryById(config.getReportCategoryId()), container));
 
         JDACommands jdaCommands = JDACommands.start(jda,
                 Bootstrapper.class,
