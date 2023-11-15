@@ -1,22 +1,17 @@
 package com.github.kaktushose.notruf.bot.language;
 
-import java.util.Locale;
+import net.dv8tion.jda.api.interactions.DiscordLocale;
 
 public enum Languages {
 
     GERMAN,
     ENGLISH;
 
-    public String localize(Locale locale) {
-        if (locale == Locale.GERMAN) {
-            if (this == GERMAN) return "Deutsch";
-            if (this == ENGLISH) return "Englisch";
+    public String localize(DiscordLocale locale) {
+        if (this == GERMAN) {
+            return locale == DiscordLocale.GERMAN ? "Deutsch" : "German";
         }
-        if (locale == Locale.ENGLISH) {
-            if (this == GERMAN) return "German";
-            if (this == ENGLISH) return "English";
-        }
-        return "N/A";
+        return locale == DiscordLocale.GERMAN ? "Englisch" : "English";
     }
 
     public Languages inverse() {

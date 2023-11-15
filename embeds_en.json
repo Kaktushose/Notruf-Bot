@@ -1,0 +1,17 @@
+{
+  "optOut": {
+    "title": "Okay",
+    "description": "{language} channels are no longer visible for you",
+    "color": "#67c94f"
+  },
+  "reset": {
+    "title": "Okay",
+    "description": "All channels are now visible again",
+    "color": "#67c94f"
+  },
+  "error": {
+    "title": "Oops",
+    "description": "You cannot opt-out from both languages. Use `/reset` to reset your settings",
+    "color": "#c95f4f"
+  }
+}

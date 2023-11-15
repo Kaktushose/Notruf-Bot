@@ -2,6 +2,7 @@ package com.github.kaktushose.notruf.bot.report;
 
 import com.github.kaktushose.jda.commands.data.EmbedCache;
 import com.github.kaktushose.jda.commands.data.EmbedDTO;
+import com.github.kaktushose.notruf.bot.NotrufBot;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -34,9 +35,10 @@ public class ReportListener extends ListenerAdapter {
     private final EmbedCache embedCache;
     private final TextChannel reportChannel;
 
-    public ReportListener(TextChannel reportChannel, EmbedCache embedCache) {
+    public ReportListener(TextChannel reportChannel, NotrufBot.EmbedCacheContainer container) {
         this.reportChannel = reportChannel;
-        this.embedCache = embedCache;
+        this.embedCache = container.germanCache();
+        ;
         reportCache = new HashMap<>();
         executorService = new ScheduledThreadPoolExecutor(5);
     }
@@ -97,7 +99,7 @@ public class ReportListener extends ListenerAdapter {
                         Button.primary(String.format("contact-%d", authorId), "Thread eröffnen")
                                 .withEmoji(Emoji.fromFormatted("\uD83D\uDCDD")),
                         Button.success(String.format("done-%d", authorId), "Erledigt").withEmoji(Emoji.fromFormatted("✅")),
-                        Button.danger("delete", "Report löschen").withEmoji(Emoji.fromFormatted("\uD83D\uDDD1"))
+                        Button.danger(String.format("delete-%d", authorId), "Report löschen").withEmoji(Emoji.fromFormatted("\uD83D\uDDD1"))
                 );
 
         EmbedDTO confirm = message.getAttachments().isEmpty() ? embedCache.getEmbed("reportConfirmNoAttachments") : embedCache.getEmbed("reportConfirm");
@@ -123,9 +125,11 @@ public class ReportListener extends ListenerAdapter {
     public void onButtonInteraction(@NotNull ButtonInteractionEvent event) {
         String componentId = event.getComponentId();
 
-        if (componentId.equals("delete")) {
+        if (componentId.startsWith("delete")) {
+            String authorId = componentId.split("-")[1];
             event.getMessage().delete().queue();
             event.reply("*Report gelöscht*").setEphemeral(true).queue();
+            reportCache.remove(Long.valueOf(authorId));
             return;
         }
 

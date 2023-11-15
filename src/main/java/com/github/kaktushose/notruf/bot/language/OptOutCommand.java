@@ -7,6 +7,8 @@ import com.github.kaktushose.jda.commands.annotations.interactions.Param;
 import com.github.kaktushose.jda.commands.annotations.interactions.SlashCommand;
 import com.github.kaktushose.jda.commands.data.EmbedCache;
 import com.github.kaktushose.jda.commands.dispatching.interactions.commands.CommandEvent;
+import com.github.kaktushose.notruf.bot.NotrufBot;
+import net.dv8tion.jda.api.interactions.DiscordLocale;
 
 import java.util.Locale;
 
@@ -14,12 +16,13 @@ import java.util.Locale;
 public class OptOutCommand {
 
     @Inject
-    private EmbedCache embedCache;
+    private NotrufBot.EmbedCacheContainer container;
     @Inject
     private RoleService roleService;
 
     @SlashCommand(desc = "Opt out from a language")
     public void onOptOut(CommandEvent event, @Choices({"english", "german"}) @Param("The language to opt out from") Languages language) {
+        EmbedCache embedCache = event.getUserLocale() == DiscordLocale.GERMAN ? container.germanCache() : container.englishCache();
         if (roleService.isInvalid(event.getUser(), language)) {
             event.reply(embedCache.getEmbed("error"));
             return;
@@ -27,8 +30,7 @@ public class OptOutCommand {
 
         roleService.addRole(event.getUser(), language);
         event.reply(embedCache.getEmbed("optOut")
-                .injectValue("german", language.localize(Locale.GERMAN))
-                .injectValue("english", language.localize(Locale.ENGLISH))
+                .injectValue("language", language.localize(event.getUserLocale()))
         );
     }
 }

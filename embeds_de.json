@@ -1,17 +1,17 @@
 {
   "optOut": {
     "title": "Okay",
-    "description": ":flag_de: {german}e Kanäle sind nun nicht mehr sichtbar\n\n:flag_gb: {english} channels are no longer visible for you",
+    "description": "{language}e Kanäle sind nun nicht mehr sichtbar",
     "color": "#67c94f"
   },
   "reset": {
     "title": "Okay",
-    "description": ":flag_de: Alle Kanäle sind nun wieder sichtbar\n\n:flag_gb: All channels are now visible again",
+    "description": "Alle Kanäle sind nun wieder sichtbar",
     "color": "#67c94f"
   },
   "error": {
     "title": "Oops",
-    "description": ":flag_de: Du kannst nicht beide Sprachen entfernen. Nutze `/reset` um deine Einstellungen zurückzusetzen\n\n:flag_gb: You cannot opt-out from both languages. Use `/reset` to reset your settings",
+    "description": "Du kannst nicht beide Sprachen entfernen. Nutze `/zurücksetzen` um deine Einstellungen zurückzusetzen",
     "color": "#c95f4f"
   },
   "report": {
