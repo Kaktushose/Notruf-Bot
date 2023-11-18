@@ -19,6 +19,7 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.AttachedFile;
 import net.dv8tion.jda.api.utils.FileUpload;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
+import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import org.jetbrains.annotations.NotNull;
 
@@ -146,15 +147,14 @@ public class ReportListener extends ListenerAdapter {
         if (componentId.startsWith("done")) {
             String authorId = componentId.split("-")[1];
 
-            MessageEditBuilder builder = MessageEditBuilder.fromMessage(event.getMessage());
-            EmbedBuilder embed = new EmbedBuilder(builder.getEmbeds().get(0));
-
-            builder = new MessageEditBuilder();
-            builder.setActionRow(Button.primary(String.format("contact-%s", authorId), "Thread eröffnen")
-                    .withEmoji(Emoji.fromFormatted("\uD83D\uDCDD")));
+            EmbedBuilder embed = new EmbedBuilder(event.getMessage().getEmbeds().get(0));
             embed.setColor(0x67c94f);
             embed.getFields().clear();
             embed.addField("Status", "✅ bearbeitet", false);
+
+            MessageEditBuilder builder = new MessageEditBuilder();
+            builder.setActionRow(Button.primary(String.format("contact-%s", authorId), "Thread eröffnen")
+                    .withEmoji(Emoji.fromFormatted("\uD83D\uDCDD")));
             builder.setEmbeds(embed.build());
 
             event.editMessage(builder.build()).queue();
@@ -174,6 +174,10 @@ public class ReportListener extends ListenerAdapter {
                     .syncPermissionOverrides()
                     .addMemberPermissionOverride(Long.parseLong(authorId), Permission.VIEW_CHANNEL.getRawValue(), 0)
                     .queue(channel -> {
+                        EmbedBuilder report = new EmbedBuilder(event.getMessage().getEmbeds().get(0));
+                        report.getFields().clear();
+                        report.setColor(0x67c94f);
+                        channel.sendMessage(MessageCreateData.fromEmbeds(report.build())).setComponents().queue();
                         channel.sendMessage(String.format("<@%s>", authorId)).queue();
                         channel.sendMessage(embedCache.getEmbed("threadOpen")
                                 .injectValue("user", String.format("<@%s>", authorId))
@@ -201,7 +205,7 @@ public class ReportListener extends ListenerAdapter {
             Optional.ofNullable(event.getGuild().getTextChannelById(channelId)).ifPresent(it -> it.delete().queue());
 
             reportChannel.getJDA().retrieveUserById(authorId).flatMap(User::openPrivateChannel).flatMap(channel ->
-                    channel.sendMessage(embedCache.getEmbed("reportDone").toMessageCreateData())
+                    channel.sendMessage(embedCache.getEmbed("threadDone").toMessageCreateData())
             ).queue();
 
             event.editComponents().setContent("").queue();

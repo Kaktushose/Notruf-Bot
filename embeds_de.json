@@ -50,7 +50,7 @@
     "description": "Hallo {user},\ndas Entwickler-Team hat noch ein paar Nachfragen zu deinem Bug Report und wird sich in Kürze bei dir melden.",
     "color": "#F3D53B"
   },
-  "threadDOne": {
+  "threadDone": {
     "title": "Update",
     "description": "Das Entwickler-Team konnte alle notwendigen Informationen sammeln. Dementsprechend habe ich den gemeinsamen Textkanal wieder geschlossen.\nVielen Dank für deine Hilfe!",
     "color": "#F67c94f"
