@@ -11,22 +11,20 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.AttachedFile;
+import net.dv8tion.jda.api.utils.FileUpload;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -43,7 +41,6 @@ public class ReportListener extends ListenerAdapter {
         this.reportChannel = reportChannel;
         this.reportCategory = reportCategory;
         this.embedCache = container.germanCache();
-        ;
         reportCache = new HashMap<>();
         executorService = new ScheduledThreadPoolExecutor(5);
     }
@@ -68,18 +65,26 @@ public class ReportListener extends ListenerAdapter {
 
     private void updateReport(MessageReceivedEvent event, long reportMessageId) {
         reportChannel.retrieveMessageById(reportMessageId).queue(message -> {
-            MessageEditBuilder builder = MessageEditBuilder.fromMessage(message);
+            MessageEditBuilder builder = new MessageEditBuilder();
+
             MessageEmbed oldEmbed = message.getEmbeds().get(0);
             EmbedBuilder newEmbed = new EmbedBuilder(oldEmbed);
-
-            String report = String.format("%s\n%s", oldEmbed.getDescription(), event.getMessage().getContentDisplay());
+            String report = String.format("%s\n%s", Optional.ofNullable(oldEmbed.getDescription()).orElse(""), event.getMessage().getContentDisplay());
             if (report.length() > MessageEmbed.DESCRIPTION_MAX_LENGTH) {
                 report = report.substring(0, MessageEmbed.DESCRIPTION_MAX_LENGTH - 4) + "...";
             }
             newEmbed.setDescription(report);
             builder.setEmbeds(newEmbed.build());
 
-            message.editMessage(builder.build()).queue(success -> addAttachments(success, event.getMessage().getAttachments()));
+            List<AttachedFile> attachments = new ArrayList<>(message.getAttachments());
+            List<CompletableFuture<Void>> downloads = new ArrayList<>();
+            event.getMessage().getAttachments().forEach(attachment ->
+                    downloads.add(attachment.getProxy().download().thenAccept(it -> attachments.add(FileUpload.fromData(it, attachment.getFileName()))))
+            );
+            CompletableFuture.allOf(downloads.toArray(new CompletableFuture[0])).thenAccept(it -> {
+                builder.setAttachments(attachments);
+                message.editMessage(builder.build()).queue();
+            });
         });
 
         event.getChannel().sendMessage(embedCache.getEmbed("reportUpdate").toMessageCreateData()).queue();
@@ -110,20 +115,19 @@ public class ReportListener extends ListenerAdapter {
         EmbedDTO confirm = message.getAttachments().isEmpty() ? embedCache.getEmbed("reportConfirmNoAttachments") : embedCache.getEmbed("reportConfirm");
         event.getChannel().sendMessage(confirm.toMessageCreateData()).queue();
 
-        reportChannel.sendMessage(builder.build()).queue(success -> {
-            reportCache.put(authorId, success.getIdLong());
-            executorService.schedule(() -> reportCache.remove(authorId), 1, TimeUnit.HOURS);
-
-            addAttachments(success, message.getAttachments());
-        });
-    }
-
-    private void addAttachments(Message message, List<Message.Attachment> attachments) {
-        for (Message.Attachment attachment : attachments) {
-            attachment.getProxy().download().thenAccept(download ->
-                    message.editMessageAttachments(AttachedFile.fromData(download, attachment.getFileName())).queue()
-            );
+        List<FileUpload> attachments = new ArrayList<>();
+        List<CompletableFuture<Void>> downloads = new ArrayList<>();
+        for (Message.Attachment attachment : message.getAttachments()) {
+            downloads.add(attachment.getProxy().download().thenAccept(it -> attachments.add(AttachedFile.fromData(it, attachment.getFileName()))));
         }
+        CompletableFuture.allOf(downloads.toArray(new CompletableFuture[0])).thenAccept(ignored -> {
+            builder.setFiles(attachments);
+            reportChannel.sendMessage(builder.build()).queue(success -> {
+                reportCache.put(authorId, success.getIdLong());
+                executorService.schedule(() -> reportCache.remove(authorId), 1, TimeUnit.HOURS);
+            });
+        });
+
     }
 
     @SuppressWarnings("ConstantConditions")
