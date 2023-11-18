@@ -16,12 +16,13 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.utils.AttachedFile;
 import net.dv8tion.jda.api.utils.FileUpload;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.*;
@@ -29,9 +30,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class ReportListener extends ListenerAdapter {
 
+    private static final Logger log = LoggerFactory.getLogger(ReportListener.class);
     private final ScheduledExecutorService executorService;
     private final Map<Long, Long> reportCache;
     private final Category reportCategory;
@@ -77,14 +80,17 @@ public class ReportListener extends ListenerAdapter {
             newEmbed.setDescription(report);
             builder.setEmbeds(newEmbed.build());
 
-            List<AttachedFile> attachments = new ArrayList<>(message.getAttachments());
-            List<CompletableFuture<Void>> downloads = new ArrayList<>();
-            event.getMessage().getAttachments().forEach(attachment ->
-                    downloads.add(attachment.getProxy().download().thenAccept(it -> attachments.add(FileUpload.fromData(it, attachment.getFileName()))))
-            );
-            CompletableFuture.allOf(downloads.toArray(new CompletableFuture[0])).thenAccept(it -> {
+            List<CompletableFuture<FileUpload>> downloads = new ArrayList<>();
+            for (Message.Attachment attachment : message.getAttachments()) {
+                downloads.add(attachment.getProxy().download().thenApply(it -> FileUpload.fromData(it, attachment.getFileName())));
+            }
+
+            allOf(downloads).thenAccept(attachments -> {
                 builder.setAttachments(attachments);
                 message.editMessage(builder.build()).queue();
+            }).exceptionally(throwable -> {
+                log.error("Unable to update report!", throwable);
+                return null;
             });
         });
 
@@ -116,19 +122,29 @@ public class ReportListener extends ListenerAdapter {
         EmbedDTO confirm = message.getAttachments().isEmpty() ? embedCache.getEmbed("reportConfirmNoAttachments") : embedCache.getEmbed("reportConfirm");
         event.getChannel().sendMessage(confirm.toMessageCreateData()).queue();
 
-        List<FileUpload> attachments = new ArrayList<>();
-        List<CompletableFuture<Void>> downloads = new ArrayList<>();
+        List<CompletableFuture<FileUpload>> downloads = new ArrayList<>();
         for (Message.Attachment attachment : message.getAttachments()) {
-            downloads.add(attachment.getProxy().download().thenAccept(it -> attachments.add(AttachedFile.fromData(it, attachment.getFileName()))));
+            downloads.add(attachment.getProxy().download().thenApply(it -> FileUpload.fromData(it, attachment.getFileName())));
         }
-        CompletableFuture.allOf(downloads.toArray(new CompletableFuture[0])).thenAccept(ignored -> {
+        allOf(downloads).thenAccept(attachments -> {
             builder.setFiles(attachments);
             reportChannel.sendMessage(builder.build()).queue(success -> {
                 reportCache.put(authorId, success.getIdLong());
                 executorService.schedule(() -> reportCache.remove(authorId), 1, TimeUnit.HOURS);
             });
+        }).exceptionally(throwable -> {
+            log.error("Unable to send report!", throwable);
+            return null;
         });
+    }
 
+    private <T> CompletableFuture<List<T>> allOf(List<CompletableFuture<T>> futures) {
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                .thenApply(ignored -> futures.stream().map(CompletableFuture::join).collect(Collectors.<T>toList()))
+                .exceptionally(throwable -> {
+                    log.error("Unable to download attachments!", throwable);
+                    return Collections.emptyList();
+                });
     }
 
     @SuppressWarnings("ConstantConditions")
