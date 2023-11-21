@@ -32,12 +32,12 @@
   },
   "reportConfirmNoAttachments": {
     "title": "Vielen Dank!",
-    "description": "Dein Bug Report ist beim Entwickler-Team eingegangen. Sobald dieser vom Team bearbeitet wurde, gebe ich dir Bescheid.\n\nFalls möglich, füge deinem Bug Report bitte noch die entsprechende Logdatei sowie Screenshots hinzu. Die Logdatei findest du hier:\n`C:\\Users\\%username%\\Dokumente\\Notruf 2\\game_host_log-xxx.txt`. Damit kannst du das Entwickler-Team zusätzlich unterstützen.\n\nSchicke mir dafür die entsprechenden Dateien einfach als Nachricht.",
+    "description": "Dein Bug Report ist beim Entwickler-Team eingegangen. Sobald dieser vom Team bearbeitet wurde, gebe ich dir Bescheid.\n\nFalls möglich, füge deinem Bug Report bitte noch die entsprechende Logdatei sowie Screenshots hinzu. Die Logdatei findest du hier:\n`C:\\Users\\%username%\\Dokumente\\Notruf 2\\game_host_log-xxx.txt`. Damit kannst du das Entwickler-Team zusätzlich unterstützen.\n\nSchicke mir dafür die entsprechenden Dateien einfach als Nachricht innerhalb der nächsten Stunde.",
     "color": "#F3D53B"
   },
   "reportUpdate": {
     "title": "Vielen Dank!",
-    "description": "Ich habe die Nachricht deinem vorherigen Bug Report hinzugefügt.\n\nFalls du deinem Bug Report noch weitere Infos hinzufügen willst, schreibe mir einfach eine weitere Nachricht.",
+    "description": "Ich habe die Nachricht deinem vorherigen Bug Report hinzugefügt.\n\nFalls du deinem Bug Report noch weitere Infos hinzufügen willst, schreibe mir einfach eine weitere Nachricht innerhalb der nächsten Stunde.",
     "color": "#F3D53B"
   },
   "reportDone": {

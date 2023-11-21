@@ -110,6 +110,11 @@ public class ReportListener extends ListenerAdapter {
         builder.setEmbeds(embedDTO.injectValue("id", message.getId())
                         .injectValue("report", report)
                         .toEmbedBuilder()
+                        .setAuthor(
+                                event.getAuthor().getEffectiveName(),
+                                String.format("https://discord.com/users/%s", authorId),
+                                event.getAuthor().getAvatarUrl() == null ? "https://cdn.discordapp.com/embed/avatars/0.png" : event.getAuthor().getAvatarUrl()
+                        )
                         .setTimestamp(Instant.now())
                         .build())
                 .addActionRow(
