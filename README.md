@@ -38,7 +38,7 @@ git clone https://github.com/Kaktushose/Levelbot.git
   "token": "", // the bot token
   "guildId": -1, // id of the guild the bot will be running on
   "reportCategoryId": // id of the parent category of the report channel
-  "reportChannelId": the report channel to send reports to
+  "reportChannelId": // the report channel to send reports to
   "englishRoleId": -1, // id of the role used to opt out of english announcments
   "germanRoleId": -1 // id of the role used to opt out of german announcments
 }
