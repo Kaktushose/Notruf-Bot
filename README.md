@@ -32,18 +32,23 @@ git clone https://github.com/Kaktushose/Levelbot.git
 
 ### 2. Configuration
 
-Open the `config.json` file and insert you values:
-
+- Open the `config.json` file and insert you values:
 ```json
 {
   "token": "", // the bot token
   "guildId": -1, // id of the guild the bot will be running on
+  "reportCategoryId": // id of the parent category of the report channel
+  "reportChannelId": the report channel to send reports to
   "englishRoleId": -1, // id of the role used to opt out of english announcments
   "germanRoleId": -1 // id of the role used to opt out of german announcments
 }
 ```
 
-### 3. Build the jar
+- Copy the files `embeds_de.json` and `embeds_en.json` from the repository folder to the location where the jar will run. 
+
+- Optionally you can configure the localization of the slash commands by editing the `commands_de.properties` located at `NotrufBot/src/main/resources/` or add more localizations.
+
+### 3. Build and run the jar
 
 Once you are done with all configuration steps, you can build the jar and run it:
 
@@ -52,7 +57,7 @@ mvn clean package
 ```
 
 ```
-java -jar Languagebot.jar
+java -jar Notruf-Bot-1.0.0.jar
 ```
 
 ## Contributing
