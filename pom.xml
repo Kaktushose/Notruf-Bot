@@ -67,12 +67,12 @@
         <dependency>
             <groupId>com.github.discord-jda</groupId>
             <artifactId>JDA</artifactId>
-            <version>239288fa9c</version>
+            <version>5.1.1</version>
         </dependency>
         <dependency>
             <groupId>com.github.Kaktushose</groupId>
             <artifactId>jda-commands</artifactId>
-            <version>2e2e80cd8d</version>
+            <version>d1e7cb6</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -82,12 +82,12 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.4.7</version>
+            <version>1.4.12</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
-            <version>1.4.7</version>
+            <version>1.4.14</version>
         </dependency>
     </dependencies>
 </project>
