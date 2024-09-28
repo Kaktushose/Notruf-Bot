@@ -11,13 +11,13 @@ public class Config {
     private long germanRoleId;
     private long englishRoleId;
 
-    public Config(String token, long guildId, long reportChannelId, long reportCategoryId, long germanRoleId, long englishRoleId) {
+    public Config(String token, String guildId, String reportChannelId, String reportCategoryId, String germanRoleId, String englishRoleId) {
         this.token = token;
-        this.guildId = guildId;
-        this.reportChannelId = reportChannelId;
-        this.reportCategoryId = reportCategoryId;
-        this.germanRoleId = germanRoleId;
-        this.englishRoleId = englishRoleId;
+        this.guildId = Long.parseLong(guildId);
+        this.reportChannelId = Long.parseLong(reportChannelId);
+        this.reportCategoryId = Long.parseLong(reportCategoryId);
+        this.germanRoleId = Long.parseLong(germanRoleId);
+        this.englishRoleId = Long.parseLong(englishRoleId);
     }
 
     public String getToken() {

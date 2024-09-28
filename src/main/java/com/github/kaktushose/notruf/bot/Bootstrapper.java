@@ -2,13 +2,10 @@ package com.github.kaktushose.notruf.bot;
 
 import com.github.kaktushose.jda.commands.annotations.Produces;
 import com.github.kaktushose.notruf.bot.language.RoleService;
-import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.security.auth.login.LoginException;
-import java.io.FileReader;
-import java.io.IOException;
 
 public class Bootstrapper {
 
@@ -17,15 +14,14 @@ public class Bootstrapper {
 
     public static void main(String[] args) {
         log.debug("Starting bot...");
-        Config config;
-        try (FileReader reader = new FileReader("./config.json")) {
-            config = new Gson().fromJson(reader, Config.class);
-            log.debug("Loaded config");
-        } catch (IOException e) {
-            log.error("Unable to load config file!", e);
-            System.exit(1);
-            return;
-        }
+        Config config = new Config(
+                System.getenv("BOT_TOKEN"),
+                System.getenv("GUILD_ID"),
+                System.getenv("REPORT_CHANNEL_ID"),
+                System.getenv("REPORT_CATEGORY_ID"),
+                System.getenv("ENGLISH_ROLE_ID"),
+                System.getenv("GERMAN_ROLE_ID")
+        );
 
         bot = new NotrufBot(config);
         try {

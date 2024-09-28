@@ -32,4 +32,4 @@ buildNumber.properties
 .mvn/wrapper/maven-wrapper.jar
 
 ### Project ###
-./config.json
+/.env
