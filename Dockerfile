@@ -1,10 +1,10 @@
-FROM maven:3.9.5-amazoncorretto-21-debian AS builder
+FROM maven:3.9.12-eclipse-temurin-25 AS builder
 
 WORKDIR /bot
 COPY . .
 RUN mvn clean package -DskipTests
 
-FROM openjdk:21
+FROM eclipse-temurin:25-jre-alpine
 
 COPY --from=builder /bot/*.json .
 COPY --from=builder /bot/target/Notruf-Bot-1.0.0.jar ./Notruf-Bot.jar
