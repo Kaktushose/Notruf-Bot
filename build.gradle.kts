@@ -2,7 +2,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     application
-    id("com.gradleup.shadow") version "8.3.5"
+    id("com.gradleup.shadow") version "9.2.2"
 }
 
 application.mainClass = "io.github.kaktushose.notruf.Bootstrapper"
@@ -10,33 +10,29 @@ group = "io.github.kaktushose.notruf"
 version = "2.0.0"
 
 repositories {
+    maven("https://central.sonatype.com/repository/maven-snapshots/")
     mavenCentral()
-    maven { url = uri("https://jitpack.io") }
 }
 
-val saduVersion = "2.3.0"
-
 dependencies {
-    testImplementation(platform("org.junit:junit-bom:5.10.0"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
-
-    implementation("net.dv8tion:JDA:5.3.0") {
+    implementation(libs.jda) {
         exclude(module = "opus-java")
     }
+    implementation(libs.jdacommands)
 
-    implementation("club.minnced:discord-webhooks:0.8.4")
-    implementation("io.github.kaktushose:jda-commands:4.0.0-beta.7")
-    implementation("ch.qos.logback:logback-core:1.5.13")
-    implementation("ch.qos.logback:logback-classic:1.5.13")
-    implementation("org.slf4j:slf4j-api:2.0.9")
-    implementation("org.postgresql:postgresql:42.7.4")
-    implementation("com.zaxxer:HikariCP:6.1.0")
-    implementation("de.chojo.sadu", "sadu-datasource", saduVersion)
-    implementation("de.chojo.sadu", "sadu-queries", saduVersion)
-    implementation("de.chojo.sadu", "sadu-mapper", saduVersion)
-    implementation("de.chojo.sadu", "sadu-postgresql", saduVersion)
-    implementation("de.chojo.sadu", "sadu-updater", saduVersion)
+    implementation(libs.logback.core)
+    implementation(libs.logback.classic)
+    implementation(libs.slf4j)
 
+    implementation(libs.postgres)
+    implementation(libs.hikari)
+    implementation(libs.sadu.datasource)
+    implementation(libs.sadu.queries)
+    implementation(libs.sadu.mapper)
+    implementation(libs.sadu.postgresql)
+    implementation(libs.sadu.updater)
+
+    implementation(libs.jspecify)
 }
 
 tasks.test {
@@ -46,10 +42,14 @@ tasks.test {
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
     options.isIncremental = true
-    options.compilerArgs.add("-parameters")
-    sourceCompatibility = "23"
+    options.compilerArgs.addAll(listOf("-parameters", "--enable-preview"))
+    sourceCompatibility = "25"
 }
 
 tasks.withType<ShadowJar> {
     archiveFileName = "notrufbot.jar"
+}
+
+tasks.withType<JavaExec>() {
+    jvmArgs("--enable-preview", "--sun-misc-unsafe-memory-access=allow")
 }

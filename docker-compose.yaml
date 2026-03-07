@@ -31,5 +31,7 @@ services:
       - EMBED_PATH=${EMBED_PATH}
     volumes:
       - ./data/logs:/logs
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     depends_on:
       - postgres

@@ -1,165 +1,160 @@
 package io.github.kaktushose.notruf;
 
-import com.github.kaktushose.jda.commands.JDACommands;
-import com.github.kaktushose.jda.commands.definitions.interactions.command.CommandDefinition.CommandConfig;
-import com.github.kaktushose.jda.commands.embeds.EmbedCache;
-import com.github.kaktushose.jda.commands.embeds.error.JsonErrorMessageFactory;
-import com.github.kaktushose.jda.commands.guice.GuiceExtensionData;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Provides;
-import de.chojo.sadu.datasource.DataSourceCreator;
-import de.chojo.sadu.mapper.RowMapperRegistry;
-import de.chojo.sadu.postgresql.databases.PostgreSql;
-import de.chojo.sadu.postgresql.mapper.PostgresqlMapper;
-import de.chojo.sadu.queries.api.configuration.QueryConfiguration;
-import de.chojo.sadu.updater.SqlUpdater;
-import io.github.kaktushose.notruf.moderation.ModerationActLock;
-import io.github.kaktushose.notruf.moderation.revert.AutomaticRevertTask;
-import io.github.kaktushose.notruf.serverlog.Serverlog;
+import io.github.kaktushose.notruf.Replies.AbsoluteTime;
+import io.github.kaktushose.notruf.Replies.RelativeTime;
+import io.github.kaktushose.notruf.auditlog.AuditlogService.UnresolvedSnowflake;
+import io.github.kaktushose.notruf.auditlog.AuditlogSubscriber;
+import io.github.kaktushose.notruf.auditlog.LoggingSubscriber;
+import io.github.kaktushose.notruf.auditlog.lifecycle.BotEvent;
+import io.github.kaktushose.notruf.auditlog.lifecycle.events.ModerationEvent;
+import io.github.kaktushose.notruf.moderation.lock.ModerationActLock;
+import io.github.kaktushose.notruf.serverlog.BotEventSubscriber;
+import io.github.kaktushose.notruf.serverlog.ModerationEventSubscriber;
+import io.github.kaktushose.notruf.serverlog.ServerlogSubscriber;
 import io.github.kaktushose.notruf.slowmode.SlowmodeEventHandler;
+import dev.goldmensch.fluava.Fluava;
+import dev.goldmensch.fluava.Result;
+import dev.goldmensch.fluava.Result.Success;
+import dev.goldmensch.fluava.function.Function;
+import dev.goldmensch.fluava.function.Value.Text;
+import io.github.kaktushose.jdac.JDACommands;
+import io.github.kaktushose.jdac.configuration.Property;
+import io.github.kaktushose.jdac.definitions.interactions.InteractionDefinition.ReplyConfig;
+import io.github.kaktushose.jdac.definitions.interactions.command.CommandDefinition.CommandConfig;
+import io.github.kaktushose.jdac.guice.GuiceExtensionData;
+import io.github.kaktushose.jdac.message.i18n.FluavaLocalizer;
+import io.github.kaktushose.jdac.message.resolver.MessageResolver;
+import io.github.kaktushose.jdac.message.resolver.Resolver;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Activity;
-import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.interactions.IntegrationType;
+import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
-import org.jetbrains.annotations.ApiStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.sql.SQLException;
+import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-/**
- * The main class of the bot
- */
-public class NotrufBot extends AbstractModule {
+import static net.dv8tion.jda.api.utils.TimeFormat.*;
 
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+public class NotrufBot extends DatabaseModule {
+
     private static final Logger log = LoggerFactory.getLogger(NotrufBot.class);
     private final JDA jda;
-    private final JDACommands jdaCommands;
     private final Guild guild;
-    private final EmbedCache embedCache;
-    private final Serverlog serverlog;
     private final ModerationActLock moderationActLock = new ModerationActLock();
 
-    /**
-     * Constructor of the bot, creates a JDA instance and initiates all relevant services.
-     *
-     * @param guildId The guild the bot should listen to
-     * @param token   The discord bot token
-     * @hidden The {@link SuppressWarnings} annotation is used to suppress an error message of sadu, which is caused
-     * due to the using of {@link ApiStatus.Internal} marked {@link de.chojo.sadu.core.updater.UpdaterBuilder} class.
-     */
-    @SuppressWarnings("UnstableApiUsage")
     private NotrufBot(String guildId, String token) throws InterruptedException {
-        embedCache = new EmbedCache(System.getenv("EMBED_PATH"));
-
-        jda = JDABuilder.createDefault(token)
-                .enableIntents(
-                        GatewayIntent.GUILD_MEMBERS,
-                        GatewayIntent.GUILD_PRESENCES,
-                        GatewayIntent.MESSAGE_CONTENT
-                )
-                .setMemberCachePolicy(MemberCachePolicy.ALL)
-                .enableCache(CacheFlag.ACTIVITY, CacheFlag.CLIENT_STATUS)
-                .addEventListeners(new SlowmodeEventHandler(embedCache))
-                .setActivity(Activity.customStatus("Notruf Bot - Booting..."))
-                .setStatus(OnlineStatus.DO_NOT_DISTURB)
-                .build().awaitReady();
-
+        jda = jda(token);
         guild = Objects.requireNonNull(jda.getGuildById(guildId), "Failed to load guild");
 
-        serverlog = new Serverlog(guild, embedCache);
+        JDACommands jdaCommands = jdaCommands(fluava());
+        MessageResolver resolver = jdaCommands.property(Property.MESSAGE_RESOLVER);
 
-        jdaCommands = JDACommands.builder(jda, NotrufBot.class, "io.github.kaktushose.notruf")
-                .errorMessageFactory(new JsonErrorMessageFactory(embedCache))
-                .globalCommandConfig(CommandConfig.of(config -> config.enabledPermissions(Permission.MODERATE_MEMBERS)))
-                .extensionData(new GuiceExtensionData(Guice.createInjector(this)))
-                .start();
+        subscribers(resolver);
+        jda.addEventListener(new SlowmodeEventHandler(resolver, slowmodeService(), permissionsService()));
 
-        jda.getPresence().setPresence(OnlineStatus.ONLINE, Activity.listening("euren Nachrichten"), false);
+        Executors.newScheduledThreadPool(1).scheduleAtFixedRate(
+                () -> moderationActService().automaticRevert(guild, resolver),
+                0, 1, TimeUnit.MINUTES
+        );
 
-        var dataSource = DataSourceCreator.create(PostgreSql.get())
-                .configure(config -> config.host(System.getenv("POSTGRES_HOST"))
-                        .port(System.getenv("POSTGRES_PORT"))
-                        .user(System.getenv("POSTGRES_USER"))
-                        .password(System.getenv("POSTGRES_PASSWORD"))
-                        .database(System.getenv("POSTGRES_DATABASE"))
-                )
-                .create()
-                .build();
+        Thread.setDefaultUncaughtExceptionHandler((_, e) -> log.error("An uncaught exception has occurred!", e));
 
-        var config = QueryConfiguration.builder(dataSource)
-                .setExceptionHandler(err -> log.error("An error occurred during a database request", err))
-                .setRowMapperRegistry(new RowMapperRegistry().register(PostgresqlMapper.getDefaultMapper()))
-                .build();
-        QueryConfiguration.setDefault(config);
-
-        try {
-            SqlUpdater.builder(dataSource, PostgreSql.get()).execute();
-        } catch (SQLException | IOException e) {
-            throw new RuntimeException("Failed to migrate database!", e);
-        }
-
-        scheduler.scheduleAtFixedRate(new AutomaticRevertTask(guild, embedCache, jda.getSelfUser()), 0, 1, TimeUnit.MINUTES);
+        jda.getPresence().setPresence(
+                OnlineStatus.ONLINE,
+                Activity.listening(resolver.resolve("bot-status", Locale.GERMAN)),
+                false
+        );
     }
 
-    /**
-     * Creates and starts a new Bot instance
-     *
-     * @param guildId The guild the bot should listen to
-     * @param token   The discord bot token
-     * @return The {@link NotrufBot} instance
-     */
-    public static NotrufBot start(String guildId, String token) throws InterruptedException {
-        return new NotrufBot(guildId, token);
+    public static void start(String guildId, String token) throws InterruptedException {
+        new NotrufBot(guildId, token);
     }
 
-    /**
-     * Shuts the bot and all relevant services down.
-     */
-    public void shutdown() {
-        jda.shutdown();
+    @Provides
+    public ModerationActLock moderationActLock() {
+        return moderationActLock;
     }
 
-    public JDA getJda() {
+    private JDA jda(String token) throws InterruptedException {
+        JDA jda = JDABuilder.createDefault(token)
+                            .enableIntents(
+                                    GatewayIntent.GUILD_MEMBERS,
+                                    GatewayIntent.GUILD_PRESENCES,
+                                    GatewayIntent.MESSAGE_CONTENT
+                            ).setMemberCachePolicy(MemberCachePolicy.ALL)
+                            .enableCache(CacheFlag.ACTIVITY, CacheFlag.CLIENT_STATUS)
+                            .setActivity(Activity.customStatus("Notruf-Bot - Booting..."))
+                            .setStatus(OnlineStatus.DO_NOT_DISTURB)
+                            .setEventPool(Executors.newVirtualThreadPerTaskExecutor())
+                            .build().awaitReady();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(jda::shutdown));
+
         return jda;
     }
 
-    public JDACommands getJdaCommands() {
-        return jdaCommands;
+    private Fluava fluava() {
+        return Fluava.builder()
+                .fallback(Locale.GERMAN)
+                .bundleRoot("localization")
+                .functions(config ->
+                        config.register("RESOLVED_USER", Function.implicit((_, user, _) ->
+                                result(formatUser(jda, user)), UserSnowflake.class)
+                        ).register("RELATIVE_TIME", Function.implicit((_, time, _) ->
+                                result("%s (%s)".formatted(DATE_TIME_LONG.format(time.millis()), RELATIVE.atTimestamp(time.millis()))), RelativeTime.class)
+                        ).register("ABSOLUTE_TIME", Function.implicit((_, time, _) ->
+                                result(DATE_TIME_SHORT.format(time.millis())), AbsoluteTime.class)
+                        ).register("UNRESOLVED_SNOWFLAKE", Function.implicit((_, snowflake, _) ->
+                                result(snowflake.getId()), UnresolvedSnowflake.class))
+                ).build();
     }
 
-    public Guild getGuild() {
-        return guild;
+    // TODO workaround until Fluava improves API
+    private Result<Text> result(String value) {
+        return new Success<>(new Text(value));
     }
 
-    public ScheduledExecutorService getScheduler() {
-        return scheduler;
+    private JDACommands jdaCommands(Fluava parent) {
+        return JDACommands.builder(jda)
+                .packages("io.github.kaktushose.notruf")
+                .localizer(FluavaLocalizer.create(parent))
+                .globalReplyConfig(ReplyConfig.of(config -> config.allowedMentions(List.of())
+                        .keepComponents(false))
+                ).globalCommandConfig(CommandConfig.of(config -> config
+                        .enabledPermissions(Permission.MODERATE_MEMBERS)
+                        .integration(IntegrationType.GUILD_INSTALL)
+                        .context(InteractionContextType.GUILD))
+                ).extensionData(new GuiceExtensionData(Guice.createInjector(this)))
+                .start();
     }
 
-    @Provides
-    public EmbedCache getEmbedCache() {
-        return embedCache;
+    private String formatUser(JDA jda, UserSnowflake user) {
+        if (user instanceof User resolved) {
+            return "%s (%s)".formatted(resolved.getAsMention(), resolved.getEffectiveName());
+        }
+        return "%s (%s)".formatted(user.getAsMention(), jda.retrieveUserById(user.getId()).complete().getEffectiveName());
     }
 
-    @Provides
-    public Serverlog getServerlog() {
-        return serverlog;
-    }
+    private void subscribers(Resolver<String> resolver) {
+        lifecycle().subscribe(BotEvent.class, new AuditlogSubscriber(auditlogService()));
 
-    @Provides
-    public ModerationActLock getModerationManager() {
-        return moderationActLock;
+        lifecycle().subscribe(BotEvent.class, new LoggingSubscriber());
+
+        ServerlogSubscriber.Data data = new ServerlogSubscriber.Data(guild, configService(), resolver);
+        lifecycle().subscribe(BotEvent.class, new BotEventSubscriber(data));
+        lifecycle().subscribe(ModerationEvent.class, new ModerationEventSubscriber(data));
     }
 }

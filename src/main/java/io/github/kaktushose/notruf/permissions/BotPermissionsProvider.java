@@ -1,26 +1,34 @@
 package io.github.kaktushose.notruf.permissions;
 
-import com.github.kaktushose.jda.commands.dispatching.context.InvocationContext;
-import com.github.kaktushose.jda.commands.guice.Implementation;
-import com.github.kaktushose.jda.commands.permissions.PermissionsProvider;
+import com.google.inject.Inject;
+import io.github.kaktushose.jdac.dispatching.context.InvocationContext;
+import io.github.kaktushose.jdac.guice.Implementation;
+import io.github.kaktushose.jdac.permissions.PermissionsProvider;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
-import org.jetbrains.annotations.NotNull;
+
 
 @Implementation
 public class BotPermissionsProvider implements PermissionsProvider {
 
-    @Override
-    public boolean hasPermission(@NotNull User user, @NotNull InvocationContext<?> context) {
-        return BotPermissionsService.getUserPermissions(user).hasPermissions(context);
+    private final PermissionsService permissionsService;
+
+    @Inject
+    public BotPermissionsProvider(PermissionsService permissionsService) {
+        this.permissionsService = permissionsService;
     }
 
     @Override
-    public boolean hasPermission(@NotNull Member member, @NotNull InvocationContext<?> context) {
+    public boolean hasPermission(User user, InvocationContext<?> context) {
+        return permissionsService.getUser(user).hasPermissions(context);
+    }
+
+    @Override
+    public boolean hasPermission(Member member, InvocationContext<?> context) {
         if (member.hasPermission(Permission.ADMINISTRATOR)) {
             return true;
         }
-        return BotPermissionsService.getUserPermissions(member).hasPermissions(context);
+        return permissionsService.getCombined(member).hasPermissions(context);
     }
 }

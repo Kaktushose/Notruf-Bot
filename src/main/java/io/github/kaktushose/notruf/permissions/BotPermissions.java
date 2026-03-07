@@ -1,6 +1,5 @@
 package io.github.kaktushose.notruf.permissions;
 
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -16,7 +15,7 @@ public class BotPermissions {
     public static final String PERMISSION_MANAGE = "PERMISSION_MANAGE";
 
     /// Combines multiple permissions into one integer.
-    public static int combine(@NotNull Collection<Integer> permissions) {
+    public static int combine(Collection<Integer> permissions) {
         int combined = 0;
         for (int permission : permissions) {
             combined |= permission;
@@ -25,28 +24,27 @@ public class BotPermissions {
     }
 
     /// Decodes the given permission integer to a collection of [BitFields]
-    @NotNull
     public static Collection<BitFields> decode(int permissions) {
         return Arrays.stream(BitFields.values())
-                .filter(it -> (permissions & it.value) != 0)
-                .toList();
+                     .filter(it -> (permissions & it.value) != 0)
+                     .toList();
     }
 
     public enum BitFields {
-        ADMINISTRATOR(1, "Administrator"),
-        MODERATION_READ(1 << 1, "Einsehen von moderativen Handlung"),
-        MODERATION_CREATE(1 << 2, "Moderieren von Benutzern"),
-        MODERATION_REVERT(1 << 3, "Rückgängig machen von moderativen Handlungen"),
-        MODERATION_DELETE(1 << 4, "Löschen von moderativen Handlungen"),
-        PERMISSION_READ(1 << 5, "Einsehen von Berechtigungen"),
-        PERMISSION_MANAGE(1 << 6, "Vergeben von Berechtigungen");
+        ADMINISTRATOR(1, "admin"),
+        MODERATION_READ(1 << 1, "mod-read"),
+        MODERATION_CREATE(1 << 2, "mod-create"),
+        MODERATION_REVERT(1 << 3, "mod-revert"),
+        MODERATION_DELETE(1 << 4, "mod-delete"),
+        PERMISSION_READ(1 << 5, "perm-read"),
+        PERMISSION_MANAGE(1 << 6, "perm-manage");
 
         public final int value;
-        public final String displayName;
+        public final String localizationKey;
 
-        BitFields(int value, String displayName) {
+        BitFields(int value, String localizationKey) {
             this.value = value;
-            this.displayName = displayName;
+            this.localizationKey = localizationKey;
         }
     }
 }

@@ -1,71 +1,122 @@
 package io.github.kaktushose.notruf.notes;
 
-import com.github.kaktushose.jda.commands.annotations.interactions.*;
-import com.github.kaktushose.jda.commands.dispatching.events.interactions.CommandEvent;
-import com.github.kaktushose.jda.commands.dispatching.events.interactions.ModalEvent;
-import com.github.kaktushose.jda.commands.embeds.EmbedCache;
 import com.google.inject.Inject;
-import io.github.kaktushose.notruf.embeds.EmbedColors;
-import io.github.kaktushose.notruf.embeds.EmbedHelpers;
+import io.github.kaktushose.notruf.Replies;
+import io.github.kaktushose.notruf.auditlog.lifecycle.events.NoteEvent;
+import io.github.kaktushose.notruf.auditlog.model.AuditlogType;
+import io.github.kaktushose.notruf.notes.NotesService.Note;
 import io.github.kaktushose.notruf.permissions.BotPermissions;
-import net.dv8tion.jda.api.entities.Member;
+import io.github.kaktushose.notruf.util.SeparatedContainer;
+import io.github.kaktushose.jdac.annotations.i18n.Bundle;
+import io.github.kaktushose.jdac.annotations.interactions.Command;
+import io.github.kaktushose.jdac.annotations.interactions.Interaction;
+import io.github.kaktushose.jdac.annotations.interactions.Modal;
+import io.github.kaktushose.jdac.annotations.interactions.Permissions;
+import io.github.kaktushose.jdac.dispatching.events.interactions.CommandEvent;
+import io.github.kaktushose.jdac.dispatching.events.interactions.ModalEvent;
+import net.dv8tion.jda.api.components.label.Label;
+import net.dv8tion.jda.api.components.separator.Separator;
+import net.dv8tion.jda.api.components.textdisplay.TextDisplay;
+import net.dv8tion.jda.api.components.textinput.TextInput;
+import net.dv8tion.jda.api.components.textinput.TextInputStyle;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.commands.Command.Type;
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
+import org.jspecify.annotations.Nullable;
 
-@Interaction
+import java.util.List;
+import java.util.Optional;
+
+import static io.github.kaktushose.jdac.message.placeholder.Entry.entry;
+
+@Bundle("notes")
+@Interaction("notes")
 @Permissions(BotPermissions.MODERATION_CREATE)
 public class NotesCommands {
 
+    private static final int NOTE_LIMIT = 10;
+    private static final String NOTE_ID = "note-id";
+    private @Nullable User target;
+    private boolean ephemeral;
+
+    private final NotesService notesService;
+
     @Inject
-    private EmbedCache embedCache;
+    public NotesCommands(NotesService notesService) {
+        this.notesService = notesService;
+    }
 
-    private Member target;
-    private boolean ephemeral = false;
+    @Command(value = "modal", type = Type.USER)
+    public void onCreateContext(CommandEvent event, User target) {
+        ephemeral = true;
+        onCreate(event, target);
+    }
 
-    @Command(value = "notes create", desc = "Erstellt eine Notiz über einen Benutzer")
-    public void createNote(CommandEvent event, @Param("Zu welchem Benutzer soll eine Notiz erstellt werden?") Member target) {
-        var noteCount = NotesService.getNoteCountFromUser(target.getIdLong());
+    @Command("create")
+    public void onCreate(CommandEvent event, User target) {
+        this.target = target;
 
-        if (noteCount >= 25) {
-            event.reply(embedCache.getEmbed("noteLimitReached").injectValue("color", EmbedColors.ERROR));
+        if (notesService.count(target) >= NOTE_LIMIT) {
+            event.reply(Replies.error("limit-reached"));
             return;
         }
 
-        this.target = target;
-        event.replyModal("createNoteModal");
+        event.replyModal("onModal", Label.of("modal.content", TextInput.of(NOTE_ID, TextInputStyle.PARAGRAPH)));
     }
 
-    @Command(value = "Notiz erstellen", type = Type.USER)
-    public void createNoteContext(CommandEvent event, User target) {
-        this.target = event.getGuild().retrieveMember(target).complete();
-        ephemeral = true;
-        event.replyModal("createNoteModal");
+    @Modal("modal")
+    public void onModal(ModalEvent event) {
+        var note = notesService.create(target, event.getUser(), event.value(NOTE_ID).getAsString());
+
+        notesService.publish(new NoteEvent(AuditlogType.NOTE_CREATE, event.getUser(), target, note));
+
+        SeparatedContainer container = new SeparatedContainer(
+                TextDisplay.of("created"),
+                Separator.createDivider(Separator.Spacing.SMALL),
+                entry("id", note.id())
+        ).withAccentColor(Replies.SUCCESS);
+
+        container.append(TextDisplay.of("created.content"), entry("content", note.content()));
+        container.append(TextDisplay.of("created.target"), entry("target", target));
+        container.append(
+                TextDisplay.of("created.creator"),
+                entry("createdBy", event.getMember()),
+                entry("createdAt", note.createdAt())
+        );
+
+        event.with().ephemeral(ephemeral).reply(container);
     }
 
-    @Command(value = "notes list", desc = "Listet alle Notizen eines Benutzers auf")
-    public void listNotes(CommandEvent event, @Param("Welcher Benutzer soll aufgelistet werden?") Member target) {
-        var notes = NotesService.getNotesFromUser(target.getIdLong());
-        event.reply(EmbedHelpers.getNotesEmbed(embedCache, event.getJDA(), target, notes));
+    @Command("list")
+    public void onList(CommandEvent event, User target) {
+        List<Note> notes = notesService.getAll(target);
+
+        SeparatedContainer container = new SeparatedContainer(
+                TextDisplay.of("list"),
+                Separator.createDivider(Separator.Spacing.SMALL),
+                entry("target", target)
+        ).withAccentColor(Replies.STANDARD);
+
+        if (notes.isEmpty()) {
+            container.append(TextDisplay.of("list.empty"));
+        } else {
+            notes.forEach(note -> container.append(note.toTextDisplay(event.messageResolver(), event.getUserLocale())));
+        }
+
+        event.reply(container);
     }
 
-    @Command(value = "notes delete", desc = "Löscht eine Notiz")
-    public void deleteNote(CommandEvent event, @Param("Welche Notiz soll gelöscht werden?") Long noteId) {
-        var note = NotesService.getNote(noteId);
+    @Command("delete")
+    public void onDelete(CommandEvent event, long noteId) {
+        Optional<Note> note = notesService.get(noteId);
 
         if (note.isEmpty()) {
-            event.reply(embedCache.getEmbed("noteNotFound").injectValue("id", noteId).injectValue("color", EmbedColors.ERROR));
+            event.reply(Replies.warning("not-found"), entry("id", noteId));
             return;
         }
 
-        NotesService.deleteNote(note.get().id());
-        event.reply(embedCache.getEmbed("noteDeleted").injectValue("id", noteId).injectValue("color", EmbedColors.SUCCESS));
-    }
+        notesService.publish(new NoteEvent(AuditlogType.NOTE_DELETE, event.getUser(), note.get().target(), note.get()));
+        notesService.delete(noteId);
 
-    @Modal("Notiz erstellen")
-    public void createNoteModal(ModalEvent event, @TextInput(value = "Inhalt der Notiz", style = TextInputStyle.PARAGRAPH) String content) {
-        var note = NotesService.createNote(target.getIdLong(), event.getMember().getIdLong(), content);
-        event.with().ephemeral(ephemeral).reply(EmbedHelpers.getNotesCreatedEmbed(embedCache, event.getJDA(), note));
+        event.reply(Replies.success("deleted"), entry("id", noteId));
     }
-
 }

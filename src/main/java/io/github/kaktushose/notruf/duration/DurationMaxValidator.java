@@ -1,20 +1,35 @@
 package io.github.kaktushose.notruf.duration;
 
 
-import com.github.kaktushose.jda.commands.dispatching.context.InvocationContext;
-import com.github.kaktushose.jda.commands.dispatching.validation.Validator;
-import com.github.kaktushose.jda.commands.guice.Implementation;
-import org.jetbrains.annotations.NotNull;
+import com.google.inject.Inject;
+import io.github.kaktushose.notruf.Helpers;
+import io.github.kaktushose.jdac.dispatching.validation.Validator;
+import io.github.kaktushose.jdac.guice.Implementation;
+import io.github.kaktushose.jdac.message.resolver.MessageResolver;
 
 import java.time.Duration;
 
-@Implementation.Validator(annotation = DurationMax.class)
-public class DurationMaxValidator implements Validator {
+import static io.github.kaktushose.jdac.message.placeholder.Entry.entry;
 
-    @Override
-    public boolean apply(@NotNull Object argument, @NotNull Object annotation, @NotNull InvocationContext<?> context) {
-        DurationMax durationMax = (DurationMax) annotation;
-        return ((Duration) argument).toMillis() <= durationMax.value() * 1000;
+@Implementation.Validator(annotation = DurationMax.class)
+public class DurationMaxValidator implements Validator<Duration, DurationMax> {
+
+    private final MessageResolver resolver;
+
+    @Inject
+    public DurationMaxValidator(MessageResolver resolver) {
+        this.resolver = resolver;
     }
 
+    @Override
+    public void apply(Duration input, DurationMax durationMax, Context context) {
+        Duration max = Duration.of(durationMax.amount(), durationMax.unit());
+        if (input.compareTo(max) > 0) {
+            context.fail(resolver.resolve(
+                    "duration-too-long",
+                    context.invocationContext().event().getUserLocale(),
+                    entry("duration", Helpers.formatDuration(max)))
+            );
+        }
+    }
 }

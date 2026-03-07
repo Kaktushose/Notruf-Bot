@@ -1,19 +1,27 @@
 package io.github.kaktushose.notruf.messagelink;
 
-import com.github.kaktushose.jda.commands.dispatching.adapter.TypeAdapter;
-import com.github.kaktushose.jda.commands.guice.Implementation;
-import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
-import org.jetbrains.annotations.NotNull;
+import com.google.inject.Inject;
+import io.github.kaktushose.jdac.configuration.Property;
+import io.github.kaktushose.jdac.dispatching.adapter.TypeAdapter;
+import io.github.kaktushose.jdac.guice.Implementation;
+import io.github.kaktushose.jdac.introspection.Introspection;
+import io.github.kaktushose.jdac.message.resolver.MessageResolver;
+import io.github.kaktushose.proteus.mapping.MappingResult;
 
-import java.util.Optional;
+@Implementation.TypeAdapter(source = String.class, target = MessageLink.class)
+public class MessageLinkAdapter implements TypeAdapter<String, MessageLink> {
 
-@Implementation.TypeAdapter(clazz = MessageLink.class)
-public class MessageLinkAdapter implements TypeAdapter<MessageLink> {
+    private final MessageResolver resolver;
 
-    @Override
-    @NotNull
-    public Optional<MessageLink> apply(@NotNull String raw, @NotNull GenericInteractionCreateEvent event) {
-        return MessageLink.ofString(raw);
+    @Inject
+    public MessageLinkAdapter(MessageResolver resolver) {
+        this.resolver = resolver;
     }
 
+    @Override
+    public MappingResult<MessageLink> from(String source, MappingContext<String, MessageLink> context) {
+        return MessageLink.ofString(source)
+                .map(it -> (MappingResult<MessageLink>) MappingResult.lossless(it))
+                .orElse(MappingResult.failure(resolver.resolve("invalid-link", Introspection.scopedGet(Property.JDA_EVENT).getUserLocale())));
+    }
 }

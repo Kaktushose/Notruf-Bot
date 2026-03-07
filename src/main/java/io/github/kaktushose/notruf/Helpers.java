@@ -1,46 +1,89 @@
 package io.github.kaktushose.notruf;
 
-import net.dv8tion.jda.api.exceptions.ErrorHandler;
+import io.github.kaktushose.jdac.dispatching.events.ReplyableEvent;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.components.MessageTopLevelComponent;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.UserSnowflake;
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.requests.ErrorResponse;
+import net.dv8tion.jda.api.requests.RestAction;
+import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
+import io.github.kaktushose.notruf.messagelink.MessageLink;
+import org.jetbrains.annotations.CheckReturnValue;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
-public class Helpers {
+public final class Helpers {
 
-    public static final ErrorHandler USER_HANDLER = new ErrorHandler().ignore(ErrorResponse.UNKNOWN_USER, ErrorResponse.UNKNOWN_MEMBER, ErrorResponse.CANNOT_SEND_TO_USER);
+    private static final Collection<ErrorResponse> ALLOWED_ERRORS = List.of(
+            ErrorResponse.UNKNOWN_USER,
+            ErrorResponse.UNKNOWN_MEMBER,
+            ErrorResponse.CANNOT_SEND_TO_USER
+    );
 
-    public static String durationToString(Duration duration) {
+    public static void sendDM(UserSnowflake user, JDA jda, MessageTopLevelComponent component) {
+        complete(jda.retrieveUserById(user.getId()).flatMap(User::openPrivateChannel).flatMap(channel ->
+                sendComponentsV2(component, channel)
+        ));
+    }
+
+    @CheckReturnValue
+    public static MessageCreateAction sendComponentsV2(MessageTopLevelComponent component, MessageChannel channel) {
+        return channel.sendMessageComponents(component).useComponentsV2().setAllowedMentions(List.of());
+    }
+
+    public static <T> void complete(RestAction<T> restAction) {
+        completeOpt(restAction);
+    }
+
+    @SuppressWarnings("OptionalOfNullableMisuse")
+    public static <T> Optional<T> completeOpt(RestAction<T> restAction) {
+        try {
+            return Optional.ofNullable(restAction.complete());
+        } catch (ErrorResponseException e) {
+            if (!ALLOWED_ERRORS.contains(e.getErrorResponse())) {
+                throw e;
+            }
+        }
+        return Optional.empty();
+    }
+
+    @Deprecated
+    public static String formatDuration(Duration duration) {
         StringBuilder builder = new StringBuilder();
-
-        long years = duration.toDays() >= 365 ? Math.floorDiv(duration.toDays(), 365) : 0;
-        long months = duration.toDays() >= 30 ? Math.floorDiv(duration.toDays(), 30) : 0;
-        long days = duration.toDays() - (years * 365) - (months * 30);
-        long hours = duration.toHours() % 24;
-        long minutes = duration.toMinutes() % 60;
-        long seconds = duration.getSeconds() % 60;
-
-        if (years > 0) builder.append(years).append("y ");
-        if (months > 0) builder.append(months).append("m ");
-        if (days > 0) builder.append(days).append("d ");
-        if (hours > 0) builder.append(hours).append("h ");
-        if (minutes > 0) builder.append(minutes).append("min ");
-        if (seconds > 0) builder.append(seconds).append("s ");
-
+        long days = duration.toDays();
+        long years = days >= 365 ? Math.floorDiv(days, 365) : 0;
+        long months = days >= 30 ? Math.floorDiv(duration.toDays(), 30) - years * 12 : 0;
+        builder.append(format(years, "Jahr", "e"))
+               .append(format(months, "Monat", "e"))
+               .append(format(days - (years * 365) - (months * 30), "Tag", "e"))
+               .append(format(duration.toHoursPart(), "Stunde", "n"))
+               .append(format(duration.toMinutesPart(), "Minute", "n"))
+               .append(format(duration.toSecondsPart(), "Sekunde", "n"));
         return builder.toString().trim();
     }
 
-    public static String durationToString(Duration duration, boolean detailed) {
-        if (detailed) {
-            return durationToString(duration)
-                    .replaceAll("y", " Jahr(e)")
-                    .replaceAll("m ", " Monat(e) ")
-                    .replaceAll("d", " Tag(e)")
-                    .replaceAll("h", " Stunde(n)")
-                    .replaceAll("min", " Minute(n)")
-                    .replaceAll("s", " Sekunde(n)");
-        } else {
-            return durationToString(duration);
+    private static String format(long value, String unit, String plural) {
+        if (value > 0) {
+            return "%d %s%s ".formatted(value, unit, value > 1 ? plural : "");
         }
+        return "";
     }
 
+    public static @Nullable Message retrieveMessage(ReplyableEvent<?> event, @Nullable MessageLink link) {
+        if (link == null || event.getGuild() == null) {
+            return null;
+        }
+        if (event.getGuild().getGuildChannelById(link.channelId()) instanceof MessageChannel channel) {
+            return channel.retrieveMessageById(link.messageId()).complete();
+        }
+        return null;
+    }
 }

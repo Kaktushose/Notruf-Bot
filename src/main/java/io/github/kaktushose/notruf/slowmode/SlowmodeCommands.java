@@ -1,74 +1,71 @@
 package io.github.kaktushose.notruf.slowmode;
 
-import com.github.kaktushose.jda.commands.annotations.interactions.Command;
-import com.github.kaktushose.jda.commands.annotations.interactions.Interaction;
-import com.github.kaktushose.jda.commands.annotations.interactions.Param;
-import com.github.kaktushose.jda.commands.dispatching.events.interactions.CommandEvent;
-import com.github.kaktushose.jda.commands.embeds.EmbedCache;
 import com.google.inject.Inject;
 import io.github.kaktushose.notruf.Helpers;
-import io.github.kaktushose.notruf.embeds.EmbedColors;
+import io.github.kaktushose.notruf.Replies;
+import io.github.kaktushose.notruf.auditlog.lifecycle.Lifecycle;
+import io.github.kaktushose.notruf.auditlog.lifecycle.events.SlowmodeEvent;
+import io.github.kaktushose.notruf.auditlog.model.AuditlogType;
+import io.github.kaktushose.notruf.duration.DurationMax;
+import io.github.kaktushose.jdac.annotations.i18n.Bundle;
+import io.github.kaktushose.jdac.annotations.interactions.Command;
+import io.github.kaktushose.jdac.annotations.interactions.Interaction;
+import io.github.kaktushose.jdac.dispatching.events.interactions.CommandEvent;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 
-@Interaction
+import static io.github.kaktushose.jdac.message.placeholder.Entry.entry;
+
+@Bundle("slowmode")
+@Interaction("slowmode")
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class SlowmodeCommands {
 
-    @Inject
-    private EmbedCache embedCache;
+    private final SlowmodeService slowmodeService;
+    private final Lifecycle lifecycle;
 
-    @Command(value = "slowmode info", desc = "Gibt Informationen zu den aktuellen Slowmode-Einstellungen zurück oder setzt diese.")
-    public void slowmodeInfoCommand(
-            CommandEvent event,
-            @Param(value = "Der Channel, für den die Informationen angezeigt werden sollen.", optional = true) GuildChannel channel
-    ) {
-        var guildChannel = channel == null ? event.getGuildChannel() : channel;
-        var slowmode = SlowmodeService.getSlowmode(guildChannel);
-        if (slowmode.isPresent()) {
-            event.reply(
-                    embedCache.getEmbed("slowmodeInfo")
-                            .injectValue("channelId", guildChannel.getId())
-                            .injectValue("color", EmbedColors.DEFAULT)
-                            .injectValue("duration", Helpers.durationToString(Duration.ofSeconds(slowmode.get().duration()), true))
-            );
-        } else {
-            event.reply(
-                    embedCache.getEmbed("slowmodeNotSet")
-                            .injectValue("channelId", guildChannel.getId())
-                            .injectValue("color", EmbedColors.DEFAULT)
-            );
-        }
+    @Inject
+    public SlowmodeCommands(SlowmodeService slowmodeService, Lifecycle lifecycle) {
+        this.slowmodeService = slowmodeService;
+        this.lifecycle = lifecycle;
     }
 
-    @Command(value = "slowmode set", desc = "Setzt den Slowmode für diesen oder einen anderen Kanal.")
+    @Command("info")
+    public void slowmodeInfoCommand(CommandEvent event, Optional<GuildChannel> channel) {
+        var guildChannel = channel.orElse(event.getGuildChannel());
+        var slowmode = slowmodeService.get(guildChannel);
+        if (slowmode.isEmpty()) {
+            event.reply(Replies.error("not-set"), entry("channel", guildChannel));
+            return;
+        }
+        event.reply(
+                Replies.standard("info"),
+                entry("channel", guildChannel),
+                entry("duration", Helpers.formatDuration(slowmode.get().duration()))
+        );
+    }
+
+    @Command("set")
     public void slowmodeSetCommand(
             CommandEvent event,
-            @Param("Wie lang soll der Slowmode sein?") Duration duration,
-            @Param(value = "Der Channel, für den der Slowmode gesetzt werden soll.", optional = true) GuildChannel channel
+            @DurationMax(amount = Integer.MAX_VALUE, unit = ChronoUnit.SECONDS)
+            Duration duration,
+            Optional<GuildChannel> channel
     ) {
-        var guildChannel = channel == null ? event.getGuildChannel() : channel;
-        SlowmodeService.setSlowmode(guildChannel, (int) duration.toSeconds());
-        event.reply(
-                embedCache.getEmbed("slowmodeSet")
-                        .injectValue("channelId", guildChannel.getId())
-                        .injectValue("color", EmbedColors.SUCCESS)
-                        .injectValue("duration", Helpers.durationToString(duration))
-        );
+        var guildChannel = channel.orElse(event.getGuildChannel());
+        slowmodeService.set(guildChannel, duration);
+        lifecycle.publish(new SlowmodeEvent(AuditlogType.SLOWMODE_UPDATE, event.getUser(), guildChannel, duration));
+        event.reply(Replies.success("set"), entry("channel", guildChannel), entry("duration", Helpers.formatDuration(duration)));
     }
 
-    @Command(value = "slowmode remove", desc = "Entfernt den Slowmode für diesen Channel.")
-    public void slowmodeRemoveCommand(
-            CommandEvent event,
-            @Param(value = "Der Channel, für den der Slowmode entfernt werden soll.", optional = true) GuildChannel channel
-    ) {
-        var guildChannel = channel == null ? event.getGuildChannel() : channel;
-        SlowmodeService.removeSlowmode(guildChannel);
-        event.reply(
-                embedCache.getEmbed("slowmodeRemove")
-                        .injectValue("channelId", guildChannel.getId())
-                        .injectValue("color", EmbedColors.SUCCESS)
-        );
+    @Command("remove")
+    public void slowmodeRemoveCommand(CommandEvent event, Optional<GuildChannel> channel) {
+        var guildChannel = channel.orElse(event.getGuildChannel());
+        slowmodeService.delete(guildChannel);
+        lifecycle.publish(new SlowmodeEvent(AuditlogType.SLOWMODE_UPDATE, event.getUser(), guildChannel, null));
+        event.reply(Replies.standard("remove"), entry("channel", guildChannel));
     }
-
 }

@@ -1,19 +1,20 @@
 package io.github.kaktushose.notruf.duration;
 
-import com.github.kaktushose.jda.commands.annotations.constraints.Constraint;
+import io.github.kaktushose.jdac.annotations.constraints.Constraint;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(Duration.class)
 public @interface DurationMax {
-    long value();
+    long amount();
 
-    String message() default "Die angegebene Dauer ist zu lang!";
+    ChronoUnit unit();
 }
 
