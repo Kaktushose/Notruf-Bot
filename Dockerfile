@@ -6,4 +6,4 @@ RUN gradle shadowJar --no-daemon
 FROM eclipse-temurin:25-jre-alpine
 RUN mkdir /app
 COPY --from=build /home/gradle/src/build/libs/notrufbot.jar /app/notrufbot.jar
-ENTRYPOINT ["java","-jar","/app/notrufbot.jar"]
+ENTRYPOINT ["java","-jar","/app/notrufbot.jar", "--enable-preview"]
