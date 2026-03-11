@@ -79,13 +79,3 @@ slowmode =
     { $duration }
     { "**Datum**" }
     { $createdAt }
-
-## Spielersuche
-spielersuche =
-    ### { $type }
-    { "**Betroffener Nutzer**" }
-    { $target }
-    { "**Moderator**" }
-    { $issuer }
-    { "**Datum**" }
-    { $createdAt }

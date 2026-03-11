@@ -28,7 +28,7 @@ constraint-failed =
 ## Interaction Execution Failed
 execution-failed-title =
     ## Command Ausführung fehlgeschlagen
-    Bei der Ausführung ist ein plötzlicher Fehler aufgetreten. Bitte leite die Fehlermeldung an <@395908417879015424> weiter.
+    Bei der Ausführung ist ein plötzlicher Fehler aufgetreten. Bitte leite die Fehlermeldung an <@393843637437464588> weiter.
 execution-failed-message =
     ### Fehlermeldung
     Nutzer: { $ user }
