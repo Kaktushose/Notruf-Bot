@@ -34,6 +34,7 @@ public class SeparatedContainer extends AbstractComponentImpl implements Contain
     private final Separator separator;
     private Container container;
     private @Nullable Footer footer;
+    private Locale locale;
 
     public SeparatedContainer(ContainerChildComponent header, Separator separator, Entry... entries) {
         this(Introspection.scopedGet(Property.MESSAGE_RESOLVER), header, separator, entries);
@@ -45,6 +46,7 @@ public class SeparatedContainer extends AbstractComponentImpl implements Contain
         container = Container.of(header);
         placeholders.addAll(Arrays.asList(entries));
         this.resolver = new ComponentResolver<>(resolver, Container.class);
+        locale = Locale.GERMAN;
     }
 
     public SeparatedContainer add(ContainerChildComponent section) {
@@ -163,15 +165,20 @@ public class SeparatedContainer extends AbstractComponentImpl implements Contain
     @Override
     public @Unmodifiable List<ContainerChildComponentUnion> getComponents() {
         applyFooter();
-        container = resolver.resolve(container, Locale.GERMAN, toMap());
+        container = resolver.resolve(container, locale, toMap());
         return container.getComponents();
     }
 
     @Override
     public DataObject toData() {
         applyFooter();
-        container = resolver.resolve(container, Locale.GERMAN, toMap());
+        container = resolver.resolve(container, locale, toMap());
         return ((ContainerImpl) container).toData();
+    }
+
+    public SeparatedContainer locale(Locale locale) {
+        this.locale = locale;
+        return this;
     }
 
     @Override

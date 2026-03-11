@@ -32,6 +32,8 @@ public class ConfigService extends LifecycleService {
     }
 
     public enum BotConfig {
-        SERVERLOG_KANAL
+        SERVERLOG_KANAL,
+        OPT_OUT_GERMAN,
+        OPT_OUT_ENGLISH
     }
 }

@@ -1,12 +1,9 @@
 package io.github.kaktushose.notruf.config;
 
 import com.google.inject.Inject;
+import io.github.kaktushose.jdac.annotations.interactions.*;
 import io.github.kaktushose.notruf.Replies;
 import io.github.kaktushose.jdac.annotations.i18n.Bundle;
-import io.github.kaktushose.jdac.annotations.interactions.Command;
-import io.github.kaktushose.jdac.annotations.interactions.CommandConfig;
-import io.github.kaktushose.jdac.annotations.interactions.Interaction;
-import io.github.kaktushose.jdac.annotations.interactions.Permissions;
 import io.github.kaktushose.jdac.dispatching.events.interactions.CommandEvent;
 import io.github.kaktushose.notruf.config.ConfigService.BotConfig;
 import io.github.kaktushose.notruf.permissions.BotPermissions;
@@ -30,8 +27,16 @@ public class ConfigCommands {
     }
 
     @Command("set serverlog-kanal")
-    public void setConfig(CommandEvent event, TextChannel channel) {
+    public void setServerlogConfig(CommandEvent event, TextChannel channel) {
         onConfigSet(event, BotConfig.SERVERLOG_KANAL, channel.getId());
+    }
+
+    @Command("set opt-out")
+    public void setOptOutConfig(CommandEvent event, @Choices({"german", "english"}) String language, Role role) {
+        switch (language) {
+            case "german" -> onConfigSet(event, BotConfig.OPT_OUT_GERMAN, role.getId());
+            case "english" -> onConfigSet(event, BotConfig.OPT_OUT_ENGLISH, role.getId());
+        }
     }
 
     private void onConfigSet(CommandEvent event, BotConfig config, String value) {
@@ -45,7 +50,9 @@ public class ConfigCommands {
 
         event.reply(
                 Replies.standard("config-list"),
-                entry("serverlog", serverlogChannel.orElse("no-value-set"))
+                entry("serverlog", serverlogChannel.orElse("no-value-set")),
+                entry("german", configService.get(BotConfig.OPT_OUT_GERMAN).orElse("no-value-set")),
+                entry("english", configService.get(BotConfig.OPT_OUT_ENGLISH).orElse("no-value-set"))
         );
     }
 }
