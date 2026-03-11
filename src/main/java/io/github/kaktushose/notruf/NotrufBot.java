@@ -74,7 +74,7 @@ public class NotrufBot extends DatabaseModule {
 
         jda.getPresence().setPresence(
                 OnlineStatus.ONLINE,
-                Activity.listening(resolver.resolve("bot-status", Locale.GERMAN)),
+                Activity.playing(resolver.resolve("bot-status", Locale.GERMAN)),
                 false
         );
     }
