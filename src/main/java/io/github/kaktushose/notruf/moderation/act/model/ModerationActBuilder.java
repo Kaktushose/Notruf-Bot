@@ -1,13 +1,13 @@
 package io.github.kaktushose.notruf.moderation.act.model;
 
+import io.github.kaktushose.jdac.annotations.i18n.Bundle;
+import io.github.kaktushose.jdac.dispatching.events.ReplyableEvent;
 import io.github.kaktushose.jdac.property.JDACProperty;
 import io.github.kaktushose.notruf.Helpers;
 import io.github.kaktushose.notruf.Replies;
 import io.github.kaktushose.notruf.moderation.act.ModerationActService;
 import io.github.kaktushose.notruf.rules.RuleService.RuleParagraph;
 import io.github.kaktushose.notruf.util.SeparatedContainer;
-import io.github.kaktushose.jdac.annotations.i18n.Bundle;
-import io.github.kaktushose.jdac.dispatching.events.ReplyableEvent;
 import net.dv8tion.jda.api.components.separator.Separator;
 import net.dv8tion.jda.api.components.textdisplay.TextDisplay;
 import net.dv8tion.jda.api.entities.Guild;
@@ -154,10 +154,10 @@ public class ModerationActBuilder {
     public ModerationAct execute(ReplyableEvent<?> event, ModerationActService service) {
         reason = reason == null ? event.resolve("default-reason") : reason;
         var data = new ModerationActCreateData(targetId, type, issuerId, reason, Optional.ofNullable(messageReference),
-                                               Optional.ofNullable(paragraph), duration, deletionDays);
+                Optional.ofNullable(paragraph), duration, deletionDays);
         ModerationAct act = service.create(data);
-        executor.accept(data);
         sendModerationToTarget(act, event);
+        executor.accept(data);
         return act;
     }
 
@@ -181,16 +181,16 @@ public class ModerationActBuilder {
                 entry("date", act.createdAt())
         );
         act.revokeAt().ifPresent(it ->
-                                         container.append(TextDisplay.of("act-info.revoke"), entry("until", it))
+                container.append(TextDisplay.of("act-info.revoke"), entry("until", it))
         );
         act.paragraph().ifPresent(it ->
-                                          container.append(TextDisplay.of("act-info.paragraph"), entry("paragraph", it.fullDisplay()))
+                container.append(TextDisplay.of("act-info.paragraph"), entry("paragraph", it.fullDisplay()))
         );
         act.messageReference().ifPresent(it ->
-                                                 container.append(TextDisplay.of("act-info.reference"), entry("message", it.content()))
+                container.append(TextDisplay.of("act-info.reference"), entry("message", it.content()))
         );
 
-        Helpers.sendDM(act.user(), event.getJDA(),container);
+        Helpers.sendDM(act.user(), event.getJDA(), container);
     }
 
     public enum ModerationActType {
