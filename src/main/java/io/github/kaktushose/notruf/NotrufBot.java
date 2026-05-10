@@ -2,6 +2,19 @@ package io.github.kaktushose.notruf;
 
 import com.google.inject.Guice;
 import com.google.inject.Provides;
+import dev.goldmensch.fluava.Fluava;
+import dev.goldmensch.fluava.Result;
+import dev.goldmensch.fluava.Result.Success;
+import dev.goldmensch.fluava.function.Function;
+import dev.goldmensch.fluava.function.Value.Text;
+import io.github.kaktushose.jdac.JDACommands;
+import io.github.kaktushose.jdac.definitions.interactions.InteractionDefinition.ReplyConfig;
+import io.github.kaktushose.jdac.definitions.interactions.command.CommandDefinition.CommandConfig;
+import io.github.kaktushose.jdac.guice.GuiceExtensionData;
+import io.github.kaktushose.jdac.message.i18n.FluavaLocalizer;
+import io.github.kaktushose.jdac.message.resolver.MessageResolver;
+import io.github.kaktushose.jdac.message.resolver.Resolver;
+import io.github.kaktushose.jdac.property.JDACProperty;
 import io.github.kaktushose.notruf.Replies.AbsoluteTime;
 import io.github.kaktushose.notruf.Replies.RelativeTime;
 import io.github.kaktushose.notruf.auditlog.AuditlogService.UnresolvedSnowflake;
@@ -14,24 +27,14 @@ import io.github.kaktushose.notruf.serverlog.BotEventSubscriber;
 import io.github.kaktushose.notruf.serverlog.ModerationEventSubscriber;
 import io.github.kaktushose.notruf.serverlog.ServerlogSubscriber;
 import io.github.kaktushose.notruf.slowmode.SlowmodeEventHandler;
-import dev.goldmensch.fluava.Fluava;
-import dev.goldmensch.fluava.Result;
-import dev.goldmensch.fluava.Result.Success;
-import dev.goldmensch.fluava.function.Function;
-import dev.goldmensch.fluava.function.Value.Text;
-import io.github.kaktushose.jdac.JDACommands;
-import io.github.kaktushose.jdac.configuration.Property;
-import io.github.kaktushose.jdac.definitions.interactions.InteractionDefinition.ReplyConfig;
-import io.github.kaktushose.jdac.definitions.interactions.command.CommandDefinition.CommandConfig;
-import io.github.kaktushose.jdac.guice.GuiceExtensionData;
-import io.github.kaktushose.jdac.message.i18n.FluavaLocalizer;
-import io.github.kaktushose.jdac.message.resolver.MessageResolver;
-import io.github.kaktushose.jdac.message.resolver.Resolver;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.interactions.IntegrationType;
 import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -60,7 +63,7 @@ public class NotrufBot extends DatabaseModule {
         guild = Objects.requireNonNull(jda.getGuildById(guildId), "Failed to load guild");
 
         JDACommands jdaCommands = jdaCommands(fluava());
-        MessageResolver resolver = jdaCommands.property(Property.MESSAGE_RESOLVER);
+        MessageResolver resolver = jdaCommands.property(JDACProperty.MESSAGE_RESOLVER);
 
         subscribers(resolver);
         jda.addEventListener(new SlowmodeEventHandler(resolver, slowmodeService(), permissionsService()));
@@ -90,16 +93,16 @@ public class NotrufBot extends DatabaseModule {
 
     private JDA jda(String token) throws InterruptedException {
         JDA jda = JDABuilder.createDefault(token)
-                            .enableIntents(
-                                    GatewayIntent.GUILD_MEMBERS,
-                                    GatewayIntent.GUILD_PRESENCES,
-                                    GatewayIntent.MESSAGE_CONTENT
-                            ).setMemberCachePolicy(MemberCachePolicy.ALL)
-                            .enableCache(CacheFlag.ACTIVITY, CacheFlag.CLIENT_STATUS)
-                            .setActivity(Activity.customStatus("Notruf-Bot - Booting..."))
-                            .setStatus(OnlineStatus.DO_NOT_DISTURB)
-                            .setEventPool(Executors.newVirtualThreadPerTaskExecutor())
-                            .build().awaitReady();
+                .enableIntents(
+                        GatewayIntent.GUILD_MEMBERS,
+                        GatewayIntent.GUILD_PRESENCES,
+                        GatewayIntent.MESSAGE_CONTENT
+                ).setMemberCachePolicy(MemberCachePolicy.ALL)
+                .enableCache(CacheFlag.ACTIVITY, CacheFlag.CLIENT_STATUS)
+                .setActivity(Activity.customStatus("Notruf-Bot - Booting..."))
+                .setStatus(OnlineStatus.DO_NOT_DISTURB)
+                .setEventPool(Executors.newVirtualThreadPerTaskExecutor())
+                .build().awaitReady();
 
         Runtime.getRuntime().addShutdownHook(new Thread(jda::shutdown));
 

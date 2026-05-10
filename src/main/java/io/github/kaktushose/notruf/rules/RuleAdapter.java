@@ -1,12 +1,11 @@
 package io.github.kaktushose.notruf.rules;
 
 import com.google.inject.Inject;
-import io.github.kaktushose.notruf.rules.RuleService.RuleParagraph;
-import io.github.kaktushose.jdac.configuration.Property;
 import io.github.kaktushose.jdac.dispatching.adapter.TypeAdapter;
 import io.github.kaktushose.jdac.guice.Implementation;
-import io.github.kaktushose.jdac.introspection.Introspection;
 import io.github.kaktushose.jdac.message.resolver.MessageResolver;
+import io.github.kaktushose.jdac.property.JDACProperty;
+import io.github.kaktushose.notruf.rules.RuleService.RuleParagraph;
 import io.github.kaktushose.proteus.mapping.MappingResult;
 
 @Implementation.TypeAdapter(source = Integer.class, target = RuleParagraph.class)
@@ -24,6 +23,6 @@ public class RuleAdapter implements TypeAdapter<Integer, RuleParagraph> {
     @Override
     public MappingResult<RuleParagraph> from(Integer source, MappingContext<Integer, RuleParagraph> context) {
         return ruleService.get(source).map(it -> (MappingResult<RuleParagraph>) MappingResult.lossless(it))
-                .orElse(MappingResult.failure(resolver.resolve("invalid-rule", Introspection.scopedGet(Property.JDA_EVENT).getUserLocale())));
+                .orElse(MappingResult.failure(resolver.resolve("invalid-rule", JDACProperty.JDA_EVENT.scopedGet().getUserLocale())));
     }
 }

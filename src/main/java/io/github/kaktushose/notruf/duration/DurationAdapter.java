@@ -1,11 +1,10 @@
 package io.github.kaktushose.notruf.duration;
 
 import com.google.inject.Inject;
-import io.github.kaktushose.jdac.configuration.Property;
 import io.github.kaktushose.jdac.dispatching.adapter.TypeAdapter;
 import io.github.kaktushose.jdac.guice.Implementation;
-import io.github.kaktushose.jdac.introspection.Introspection;
 import io.github.kaktushose.jdac.message.resolver.MessageResolver;
+import io.github.kaktushose.jdac.property.JDACProperty;
 import io.github.kaktushose.proteus.mapping.MappingResult;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -31,7 +30,7 @@ public class DurationAdapter implements TypeAdapter<String, Duration> {
     public MappingResult<Duration> from(String source, MappingContext<String, Duration> context) {
         return parse(source)
                 .map(it -> (MappingResult<Duration>) MappingResult.lossless(it))
-                .orElse(MappingResult.failure(resolver.resolve("invalid-duration", Introspection.scopedGet(Property.JDA_EVENT).getUserLocale())));
+                .orElse(MappingResult.failure(resolver.resolve("invalid-duration", JDACProperty.JDA_EVENT.scopedGet().getUserLocale())));
     }
 
     public Optional<Duration> parse(@Nullable String raw) {

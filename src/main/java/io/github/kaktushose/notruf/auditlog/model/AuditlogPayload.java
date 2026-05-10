@@ -1,8 +1,5 @@
 package io.github.kaktushose.notruf.auditlog.model;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.kaktushose.notruf.Replies;
 import io.github.kaktushose.notruf.auditlog.lifecycle.events.MessagePurgeEvent;
 import io.github.kaktushose.notruf.config.ConfigService.BotConfig;
@@ -14,8 +11,10 @@ import io.github.kaktushose.notruf.rules.RuleService;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.util.DefaultPrettyPrinter;
+import tools.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
@@ -30,7 +29,7 @@ public sealed interface AuditlogPayload {
         }
         try {
             return Optional.of(objectMapper.readValue(json, type.payloadType()));
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.error("Failed to deserialize AuditlogPayload", e);
             return Optional.empty();
         }
@@ -39,7 +38,7 @@ public sealed interface AuditlogPayload {
     static Optional<String> toJson(AuditlogPayload payload) {
         try {
             return Optional.ofNullable(objectMapper.writeValueAsString(payload));
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             log.error("Failed to serialize AuditlogPayload", e);
             return Optional.empty();
         }
@@ -48,7 +47,7 @@ public sealed interface AuditlogPayload {
     static Optional<String> toPrettyJson(AuditlogPayload payload) {
         try {
             return Optional.ofNullable(objectMapper.writer().with(new DefaultPrettyPrinter()).writeValueAsString(payload));
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             log.error("Failed to serialize AuditlogPayload", e);
             return Optional.empty();
         }

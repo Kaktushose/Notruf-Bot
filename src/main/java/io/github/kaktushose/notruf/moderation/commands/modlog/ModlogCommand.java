@@ -1,6 +1,16 @@
 package io.github.kaktushose.notruf.moderation.commands.modlog;
 
 import com.google.inject.Inject;
+import io.github.kaktushose.jdac.annotations.constraints.Max;
+import io.github.kaktushose.jdac.annotations.constraints.Min;
+import io.github.kaktushose.jdac.annotations.i18n.Bundle;
+import io.github.kaktushose.jdac.annotations.interactions.*;
+import io.github.kaktushose.jdac.dispatching.events.ReplyableEvent;
+import io.github.kaktushose.jdac.dispatching.events.interactions.CommandEvent;
+import io.github.kaktushose.jdac.dispatching.events.interactions.ComponentEvent;
+import io.github.kaktushose.jdac.dispatching.reply.Component;
+import io.github.kaktushose.jdac.message.placeholder.Entry;
+import io.github.kaktushose.jdac.property.JDACProperty;
 import io.github.kaktushose.notruf.Helpers;
 import io.github.kaktushose.notruf.Replies;
 import io.github.kaktushose.notruf.Replies.RelativeTime;
@@ -11,17 +21,6 @@ import io.github.kaktushose.notruf.notes.NotesService;
 import io.github.kaktushose.notruf.notes.NotesService.Note;
 import io.github.kaktushose.notruf.permissions.BotPermissions;
 import io.github.kaktushose.notruf.util.SeparatedContainer;
-import io.github.kaktushose.jdac.annotations.constraints.Max;
-import io.github.kaktushose.jdac.annotations.constraints.Min;
-import io.github.kaktushose.jdac.annotations.i18n.Bundle;
-import io.github.kaktushose.jdac.annotations.interactions.*;
-import io.github.kaktushose.jdac.configuration.Property;
-import io.github.kaktushose.jdac.dispatching.events.ReplyableEvent;
-import io.github.kaktushose.jdac.dispatching.events.interactions.CommandEvent;
-import io.github.kaktushose.jdac.dispatching.events.interactions.ComponentEvent;
-import io.github.kaktushose.jdac.dispatching.reply.Component;
-import io.github.kaktushose.jdac.introspection.Introspection;
-import io.github.kaktushose.jdac.message.placeholder.Entry;
 import net.dv8tion.jda.api.components.actionrow.ActionRow;
 import net.dv8tion.jda.api.components.section.Section;
 import net.dv8tion.jda.api.components.selections.SelectOption;
@@ -46,14 +45,14 @@ import static io.github.kaktushose.jdac.message.placeholder.Entry.entry;
 @Permissions(BotPermissions.MODERATION_READ)
 public class ModlogCommand {
 
+    private final NotesService notesService;
+    private final ModerationActService actService;
     private int offset = 0;
     private int limit = 5;
     private int page = 1;
     private int maxPage = 1;
     private @Nullable User user;
     private @Nullable Member member;
-    private final NotesService notesService;
-    private final ModerationActService actService;
 
     @Inject
     public ModlogCommand(NotesService notesService, ModerationActService actService) {
@@ -209,7 +208,7 @@ public class ModlogCommand {
                 entry("issuer", act.issuer())
         );
         if (act instanceof RevertedModerationAct reverted
-            && !reverted.revertedBy().getId().equals(Introspection.scopedGet(Property.JDA).getSelfUser().getId())
+                && !reverted.revertedBy().getId().equals(JDACProperty.JDA.scopedGet().getSelfUser().getId())
         ) {
             entries.putAll(Entry.toMap(
                     entry("reverter", reverted.revertedBy()),

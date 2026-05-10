@@ -1,14 +1,13 @@
 package io.github.kaktushose.notruf.moderation.act.model;
 
+import io.github.kaktushose.jdac.property.JDACProperty;
 import io.github.kaktushose.notruf.Helpers;
 import io.github.kaktushose.notruf.Replies;
 import io.github.kaktushose.notruf.moderation.act.ModerationActService;
 import io.github.kaktushose.notruf.rules.RuleService.RuleParagraph;
 import io.github.kaktushose.notruf.util.SeparatedContainer;
 import io.github.kaktushose.jdac.annotations.i18n.Bundle;
-import io.github.kaktushose.jdac.configuration.Property;
 import io.github.kaktushose.jdac.dispatching.events.ReplyableEvent;
-import io.github.kaktushose.jdac.introspection.Introspection;
 import net.dv8tion.jda.api.components.separator.Separator;
 import net.dv8tion.jda.api.components.textdisplay.TextDisplay;
 import net.dv8tion.jda.api.entities.Guild;
@@ -212,7 +211,7 @@ public class ModerationActBuilder {
         }
 
         public String localized(DiscordLocale locale) {
-            return Introspection.scopedGet(Property.MESSAGE_RESOLVER).resolve(localizationKey, locale, Map.of());
+            return JDACProperty.MESSAGE_RESOLVER.scopedGet().resolve(localizationKey, locale, Map.of());
         }
     }
 
