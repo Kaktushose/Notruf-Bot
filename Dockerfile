@@ -5,5 +5,5 @@ RUN gradle shadowJar --no-daemon
 
 FROM eclipse-temurin:25-jre-alpine
 RUN mkdir /app
-COPY --from=build /home/gradle/src/build/libs/moderationbot.jar /app/moderationbot.jar
-ENTRYPOINT ["java","-jar","--enable-preview","--sun-misc-unsafe-memory-access=allow","/app/moderationbot.jar"]
+COPY --from=build /home/gradle/src/build/libs/notrufbot.jar /app/notrufbot.jar
+ENTRYPOINT ["java","-jar","--enable-preview","--sun-misc-unsafe-memory-access=allow","/app/notrufbot.jar"]

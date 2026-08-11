@@ -25,4 +25,4 @@ invalid-rule = Ungültige Paragraphen ID
 # Cannot be localized
 automatic-revert-reason = Automatische Aufhebung nach Ablauf der Dauer
 # Cannot be localized
-bot-status = Hört euren Nachrichten zu
+bot-status = Notruf 112 - Die Feuerwehr Simulation 3

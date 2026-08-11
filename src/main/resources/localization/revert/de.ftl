@@ -13,7 +13,7 @@ revert-info =
         [KICK] Dein Kick
         [TEMP_BAN] Dein temporärer Bann
         [BAN] Dein Bann
-    } auf dem **NPLAY** Discord Server wurde aufgehoben!
+    } auf dem **Notruf 112** Discord Server wurde aufgehoben!
     .body =
     { "**ID**" }
     \#{ $id }

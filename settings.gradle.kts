@@ -1,1 +1,1 @@
-rootProject.name = "moderationbot"
+rootProject.name = "Notruf-Bot"

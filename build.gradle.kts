@@ -41,7 +41,7 @@ tasks.withType<JavaExec>{
 }
 
 tasks.withType<ShadowJar> {
-    archiveFileName = "moderationbot.jar"
+    archiveFileName = "notrufbot.jar"
 }
 
 spotless {
