@@ -21,7 +21,8 @@ public class ConfigService {
     }
 
     public enum BotConfig {
-        SPIELERSUCHE_AUSSCHLUSS_ROLLE,
-        SERVERLOG_KANAL
+        SERVERLOG_KANAL,
+        OPT_OUT_GERMAN,
+        OPT_OUT_ENGLISH
     }
 }

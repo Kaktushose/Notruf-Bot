@@ -124,8 +124,7 @@ public class ModlogCommand {
                 entry("target", target()),
                 entry("id", target().getIdLong()),
                 entry("createdAt", RelativeTime.of(target().getTimeCreated())),
-                joinedAt(),
-                roles(target())
+                joinedAt()
         ).withAccentColor(
                 Replies.STANDARD
         ).add(
@@ -189,28 +188,6 @@ public class ModlogCommand {
             return entry("joinedAt", "empty");
         }
         return entry("joinedAt", RelativeTime.of(member.getTimeJoined()));
-    }
-
-    private Entry roles(UserSnowflake snowflake) {
-        if (!(snowflake instanceof Member member)) {
-            return entry("roles", "empty");
-        }
-
-        var spielersucheAusschlussRoleId = configService.get(ConfigService.BotConfig.SPIELERSUCHE_AUSSCHLUSS_ROLLE);
-        if (spielersucheAusschlussRoleId.isEmpty()) {
-            return entry("roles", "empty");
-        }
-
-        if (
-                member
-                        .getRoles()
-                        .stream()
-                        .noneMatch(it -> it.getId().equals(spielersucheAusschlussRoleId.get()))
-        ) {
-            return entry("roles", "empty");
-        }
-
-        return entry("roles", "<@&%s>".formatted(spielersucheAusschlussRoleId.get()));
     }
 
     private TextDisplay toTextDisplay(ReplyableEvent<?> event, ModerationAct act) {
