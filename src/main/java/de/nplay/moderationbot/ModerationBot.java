@@ -76,7 +76,7 @@ public class ModerationBot extends ServiceModule {
 
         jda.getPresence().setPresence(
                 OnlineStatus.ONLINE,
-                Activity.listening(resolver.resolve("bot-status", Locale.GERMAN)),
+                Activity.playing(resolver.resolve("bot-status", Locale.GERMAN)),
                 false
         );
     }
@@ -103,7 +103,7 @@ public class ModerationBot extends ServiceModule {
                         GatewayIntent.MESSAGE_CONTENT
                 ).setMemberCachePolicy(MemberCachePolicy.ALL)
                 .enableCache(CacheFlag.ACTIVITY, CacheFlag.CLIENT_STATUS)
-                .setActivity(Activity.customStatus("NPLAY Moderation - Booting..."))
+                .setActivity(Activity.customStatus("Notruf Bot - Booting..."))
                 .setStatus(OnlineStatus.DO_NOT_DISTURB)
                 .setEventPool(Executors.newVirtualThreadPerTaskExecutor())
                 .build().awaitReady();

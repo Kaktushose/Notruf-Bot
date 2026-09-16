@@ -10,13 +10,13 @@ public class Bootstrapper {
     static void main() {
         long startTime = System.currentTimeMillis();
         Thread.currentThread().setName("Bot");
-        log.info("Starting NPLAY-Bot...");
+        log.info("Starting Notruf-Bot...");
         try {
             ModerationBot.start(System.getenv("BOT_GUILD"), System.getenv("BOT_TOKEN"));
         } catch (Exception e) {
             log.error("Failed to start!", e);
             System.exit(1);
         }
-        log.info("Successfully started NPLAY-Moderation-Bot! Took {} ms", System.currentTimeMillis() - startTime);
+        log.info("Successfully started Notruf-Bot! Took {} ms", System.currentTimeMillis() - startTime);
     }
 }

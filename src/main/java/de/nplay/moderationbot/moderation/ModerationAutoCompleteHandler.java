@@ -21,7 +21,7 @@ public class ModerationAutoCompleteHandler {
         this.ruleService = ruleService;
     }
 
-    @AutoComplete(value = {"mod", "spielersuche ausschluss"}, options = "paragraph")
+    @AutoComplete(value = {"mod"}, options = "paragraph")
     public void onParagraphAutocomplete(AutoCompleteEvent event) {
         var rules = ruleService.getAll().stream().collect(Collectors.toMap(RuleParagraph::id, Function.identity()));
 

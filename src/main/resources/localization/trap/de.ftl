@@ -36,4 +36,4 @@ already-trap-channel =
     In dem Kanal { $channel } ist bereits eine Falle platziert!
 
 ## Internals
-kick-reason = Verdacht auf Spam-Bot. Wenn du ein echter Mensch bist, kannst du jederzeit unter discord.gg/nplay dem Server wieder beitreten.
+kick-reason = Verdacht auf Spam-Bot. Wenn du ein echter Mensch bist, kannst du jederzeit unter discord.gg/ETTNtV6CRu dem Server wieder beitreten.

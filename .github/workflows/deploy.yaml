@@ -19,7 +19,7 @@ jobs:
         id: build-image
         uses: redhat-actions/buildah-build@v3.0.1
         with:
-          image: nplay-moderation
+          image: notruf-bot
           tags: latest ${{ github.sha }}
           containerfiles: |
             ./Dockerfile
@@ -30,7 +30,7 @@ jobs:
         with:
           image: ${{ steps.build-image.outputs.image }}
           tags: ${{ steps.build-image.outputs.tags }}
-          registry: ghcr.io/nplay-team/moderation-bot
+          registry: ghcr.io/kaktushose/notruf-bot
           username: Kaktushose
           password: ${{ github.token }}
           extra-args: |
