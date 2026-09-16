@@ -33,7 +33,6 @@ import net.dv8tion.jda.api.interactions.IntegrationType;
 import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
-import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,7 +75,7 @@ public class ModerationBot extends ServiceModule {
 
         jda.getPresence().setPresence(
                 OnlineStatus.ONLINE,
-                Activity.playing(resolver.resolve("bot-status", Locale.GERMAN)),
+                Activity.listening(resolver.resolve("bot-status", Locale.GERMAN)),
                 false
         );
     }
@@ -98,11 +97,8 @@ public class ModerationBot extends ServiceModule {
     private JDA jda(String token) throws InterruptedException {
         JDA jda = JDABuilder.createDefault(token)
                 .enableIntents(
-                        GatewayIntent.GUILD_MEMBERS,
-                        GatewayIntent.GUILD_PRESENCES,
                         GatewayIntent.MESSAGE_CONTENT
-                ).setMemberCachePolicy(MemberCachePolicy.ALL)
-                .enableCache(CacheFlag.ACTIVITY, CacheFlag.CLIENT_STATUS)
+                ).setMemberCachePolicy(MemberCachePolicy.lru(100).withActiveMemberCache(true))
                 .setActivity(Activity.customStatus("Notruf Bot - Booting..."))
                 .setStatus(OnlineStatus.DO_NOT_DISTURB)
                 .setEventPool(Executors.newVirtualThreadPerTaskExecutor())
@@ -118,7 +114,7 @@ public class ModerationBot extends ServiceModule {
                 .fallback(Locale.GERMAN)
                 .bundleRoot("localization")
                 .functions(config ->
-                        config.register("RESOLVED_USER", Function.implicit((_, user, _) ->
+                        config.register("RESOLVED_USERSNOWFLAKE", Function.implicit((_, user, _) ->
                                 result(formatUser(jda, user)), UserSnowflake.class)
                         ).register("RELATIVE_TIME", Function.implicit((_, time, _) ->
                                 result("%s (%s)".formatted(DATE_TIME_LONG.format(time.millis()), RELATIVE.atTimestamp(time.millis()))), RelativeTime.class)
